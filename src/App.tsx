@@ -55,8 +55,10 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
-        // In a real app, fetch profile from DB here
-        setUser({ name: "Gabriel", surname: "Silva", role: "Sys Admin" });
+        supabase.from('profiles').select('name, surname, role').eq('id', session.user.id).single().then(({ data, error }) => {
+          if (error) console.error('Error fetching profile:', error);
+          else if (data) setUser(data as UserProfile);
+        });
       }
     });
 
@@ -65,7 +67,10 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsLoggedIn(true);
-        setUser({ name: "Gabriel", surname: "Silva", role: "Sys Admin" });
+        supabase.from('profiles').select('name, surname, role').eq('id', session.user.id).single().then(({ data, error }) => {
+          if (error) console.error('Error fetching profile:', error);
+          else if (data) setUser(data as UserProfile);
+        });
       } else {
         setIsLoggedIn(false);
         setUser(null);

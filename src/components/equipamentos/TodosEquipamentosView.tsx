@@ -21,6 +21,7 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [editingEquipamento, setEditingEquipamento] = useState<Equipamento | null>(null);
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -151,13 +152,21 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
   };
 
   const saveEquipamento = (eq: Equipamento) => {
-    setEquipamentos([...equipamentos, eq]);
-    setIsRegistering(false);
+    if (editingEquipamento) {
+      setEquipamentos(equipamentos.map(e => e.id === eq.id ? eq : e));
+      setEditingEquipamento(null);
+    } else {
+      setEquipamentos([...equipamentos, eq]);
+      setIsRegistering(false);
+    }
   };
 
   const handleAction = (action: string, id: string) => {
     if (action === 'Ver Detalhes do Equipamento') {
       setSelectedEquipamentoId(id);
+    } else if (action === 'Editar Equipamento') {
+      const eq = equipamentos.find(e => e.id === id);
+      if (eq) setEditingEquipamento(eq);
     }
   };
 
@@ -186,8 +195,8 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
     return eq ? <DetalhesEquipamentoView equipamento={eq} onClose={() => setSelectedEquipamentoId(null)} /> : null;
   }
 
-  if (isRegistering) {
-    return <CadastrarEquipamentoView onCancel={() => setIsRegistering(false)} onSave={saveEquipamento} />;
+  if (isRegistering || editingEquipamento) {
+    return <CadastrarEquipamentoView equipamentoToEdit={editingEquipamento || undefined} onCancel={() => { setIsRegistering(false); setEditingEquipamento(null); }} onSave={saveEquipamento} />;
   }
 
   return (

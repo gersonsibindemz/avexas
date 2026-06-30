@@ -11,6 +11,8 @@ export interface Componente {
   anoFabricacao: string;
   dataAquisicao: string;
   prazoGarantia: string;
+  image_url?: string | null;
+  document_urls?: string[] | null;
 }
 
 export interface Equipamento {
@@ -26,6 +28,8 @@ export interface Equipamento {
   anoFabricacao: string;
   dataAquisicao: string;
   prazoGarantia: string;
+  image_url?: string | null;
+  document_urls?: string[] | null;
   componentes: Componente[];
 }
 

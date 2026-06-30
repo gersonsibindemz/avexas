@@ -7,20 +7,21 @@ interface CadastrarComponenteProps {
   onCancel: () => void;
   onSave: (equipamentoId: string, comp: Componente) => void;
   equipamentos: Equipamento[];
+  componenteToEdit?: Componente;
 }
 
-export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ onCancel, onSave, equipamentos }) => {
-  const [nome, setNome] = useState('');
-  const [equipamentoId, setEquipamentoId] = useState(equipamentos[0]?.id || '');
-  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>('Ativo');
-  const [fabricante, setFabricante] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [numeroSerie, setNumeroSerie] = useState('');
-  const [anoFabricacao, setAnoFabricacao] = useState('');
-  const [dataAquisicao, setDataAquisicao] = useState('');
-  const [prazoGarantia, setPrazoGarantia] = useState('');
+export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ onCancel, onSave, equipamentos, componenteToEdit }) => {
+  const [nome, setNome] = useState(componenteToEdit?.nome || '');
+  const [equipamentoId, setEquipamentoId] = useState(componenteToEdit?.equipamento_id || equipamentos[0]?.id || '');
+  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>(componenteToEdit?.status as any || 'Ativo');
+  const [fabricante, setFabricante] = useState(componenteToEdit?.fabricante || '');
+  const [modelo, setModelo] = useState(componenteToEdit?.modelo || '');
+  const [numeroSerie, setNumeroSerie] = useState(componenteToEdit?.numeroSerie || '');
+  const [anoFabricacao, setAnoFabricacao] = useState(componenteToEdit?.anoFabricacao || '');
+  const [dataAquisicao, setDataAquisicao] = useState(componenteToEdit?.dataAquisicao || '');
+  const [prazoGarantia, setPrazoGarantia] = useState(componenteToEdit?.prazoGarantia || '');
 
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
 
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -32,32 +33,37 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
     const eq = equipamentos.find(e => e.id === equipamentoId);
     if (!eq) return;
 
-    let imageUrl = null;
-    if (file) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `componentes/${fileName}`;
+    let documentUrls: string[] = componenteToEdit?.document_urls || [];
+    
+    if (files.length > 0) {
+      const newDocumentUrls: string[] = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `componentes/${fileName}`;
 
-      const { data, error: uploadError } = await supabase.storage
-        .from('assets')
-        .upload(filePath, file);
+        const { data, error: uploadError } = await supabase.storage
+          .from('assets')
+          .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        return;
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          continue;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('assets')
+          .getPublicUrl(filePath);
+        
+        newDocumentUrls.push(publicUrlData.publicUrl);
       }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('assets')
-        .getPublicUrl(filePath);
-      
-      imageUrl = publicUrlData.publicUrl;
+      documentUrls = newDocumentUrls;
     }
 
     const novaComponente = {
       equipamento_id: equipamentoId, // Assumindo coluna FK
       nome,
-      codigo: 'COMP-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+      codigo: componenteToEdit?.codigo || 'COMP-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
       localizacao: eq.localizacao,
       status,
       categoria: eq.categoria,
@@ -67,14 +73,26 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
       anoFabricacao,
       dataAquisicao,
       prazoGarantia,
-      image_url: imageUrl,
+      image_url: documentUrls.length > 0 ? documentUrls[0] : null,
+      document_urls: documentUrls,
       user_id: user.id,
     };
 
-    const { data, error } = await supabase
-      .from('componentes')
-      .insert([novaComponente])
-      .select();
+    let query = supabase.from('componentes');
+    let result;
+
+    if (componenteToEdit) {
+      result = await query
+        .update(novaComponente)
+        .eq('id', componenteToEdit.id)
+        .select();
+    } else {
+      result = await query
+        .insert([novaComponente])
+        .select();
+    }
+
+    const { data, error } = result;
 
     if (error) {
       console.error('Error saving componente:', error);
@@ -148,12 +166,16 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
                         <Upload size={24} className="text-slate-400" />
                         <p className="text-xs text-slate-500">Clique para upload de arquivos</p>
                     </div>
-                    <input type="file" className="hidden" onChange={(e) => e.target.files && setFile(e.target.files[0])} />
+                    <input type="file" multiple className="hidden" onChange={(e) => e.target.files && setFiles(Array.from(e.target.files))} />
                 </label>
-                {file && (
-                  <p className="mt-2 text-sm text-sky-700 flex items-center gap-2">
-                    <File size={16} /> {file.name}
-                  </p>
+                {files.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {files.map((file, index) => (
+                      <p key={index} className="text-sm text-sky-700 flex items-center gap-2">
+                        <File size={16} /> {file.name}
+                      </p>
+                    ))}
+                  </div>
                 )}
             </div>
         </div>

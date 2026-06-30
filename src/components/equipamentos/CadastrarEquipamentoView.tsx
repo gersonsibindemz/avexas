@@ -6,20 +6,21 @@ import { supabase } from '../../lib/supabaseClient';
 interface CadastrarEquipamentoProps {
   onCancel: () => void;
   onSave: (eq: Equipamento) => void;
+  equipamentoToEdit?: Equipamento;
 }
 
-export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ onCancel, onSave }) => {
-  const [nome, setNome] = useState('');
-  const [localizacao, setLocalizacao] = useState('Ala A');
-  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>('Ativo');
-  const [categoria, setCategoria] = useState('Industrial');
-  const [fabricante, setFabricante] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [numeroSerie, setNumeroSerie] = useState('');
-  const [anoFabricacao, setAnoFabricacao] = useState('');
-  const [dataAquisicao, setDataAquisicao] = useState('');
-  const [prazoGarantia, setPrazoGarantia] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ onCancel, onSave, equipamentoToEdit }) => {
+  const [nome, setNome] = useState(equipamentoToEdit?.nome || '');
+  const [localizacao, setLocalizacao] = useState(equipamentoToEdit?.localizacao || 'Ala A');
+  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>(equipamentoToEdit?.status as any || 'Ativo');
+  const [categoria, setCategoria] = useState(equipamentoToEdit?.categoria || 'Industrial');
+  const [fabricante, setFabricante] = useState(equipamentoToEdit?.fabricante || '');
+  const [modelo, setModelo] = useState(equipamentoToEdit?.modelo || '');
+  const [numeroSerie, setNumeroSerie] = useState(equipamentoToEdit?.numeroSerie || '');
+  const [anoFabricacao, setAnoFabricacao] = useState(equipamentoToEdit?.anoFabricacao || '');
+  const [dataAquisicao, setDataAquisicao] = useState(equipamentoToEdit?.dataAquisicao || '');
+  const [prazoGarantia, setPrazoGarantia] = useState(equipamentoToEdit?.prazoGarantia || '');
+  const [files, setFiles] = useState<File[]>([]);
   
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -28,31 +29,36 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
       return;
     }
 
-    let imageUrl = null;
-    if (file) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `equipamentos/${fileName}`;
+    let documentUrls: string[] = equipamentoToEdit?.document_urls || [];
+    
+    if (files.length > 0) {
+      const newDocumentUrls: string[] = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `equipamentos/${fileName}`;
 
-      const { data, error: uploadError } = await supabase.storage
-        .from('assets')
-        .upload(filePath, file);
+        const { data, error: uploadError } = await supabase.storage
+          .from('assets')
+          .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        return;
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          continue; // Skip this file if upload fails
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('assets')
+          .getPublicUrl(filePath);
+        
+        newDocumentUrls.push(publicUrlData.publicUrl);
       }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('assets')
-        .getPublicUrl(filePath);
-      
-      imageUrl = publicUrlData.publicUrl;
+      documentUrls = newDocumentUrls;
     }
 
     const novoEquipamento = {
       nome,
-      codigo: 'EQ-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+      codigo: equipamentoToEdit?.codigo || 'EQ-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
       localizacao,
       status,
       categoria,
@@ -62,21 +68,33 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
       anoFabricacao,
       dataAquisicao,
       prazoGarantia,
-      image_url: imageUrl,
+      image_url: documentUrls.length > 0 ? documentUrls[0] : null,
+      document_urls: documentUrls,
       user_id: user.id,
     };
 
-    const { data, error } = await supabase
-      .from('equipamentos')
-      .insert([novoEquipamento])
-      .select();
+    let query = supabase.from('equipamentos');
+    let result;
+
+    if (equipamentoToEdit) {
+      result = await query
+        .update(novoEquipamento)
+        .eq('id', equipamentoToEdit.id)
+        .select();
+    } else {
+      result = await query
+        .insert([novoEquipamento])
+        .select();
+    }
+
+    const { data, error } = result;
 
     if (error) {
       console.error('Error saving equipamento:', error);
       return;
     }
 
-    onSave({ ...data[0], componentes: [] } as Equipamento);
+    onSave({ ...data[0], componentes: equipamentoToEdit?.componentes || [] } as Equipamento);
   };
 
   return (
@@ -153,12 +171,16 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
                         <Upload size={24} className="text-slate-400" />
                         <p className="text-xs text-slate-500">Clique para upload de arquivos</p>
                     </div>
-                    <input type="file" className="hidden" onChange={(e) => e.target.files && setFile(e.target.files[0])} />
+                    <input type="file" multiple className="hidden" onChange={(e) => e.target.files && setFiles(Array.from(e.target.files))} />
                 </label>
-                {file && (
-                  <p className="mt-2 text-sm text-sky-700 flex items-center gap-2">
-                    <File size={16} /> {file.name}
-                  </p>
+                {files.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {files.map((file, index) => (
+                      <p key={index} className="text-sm text-sky-700 flex items-center gap-2">
+                        <File size={16} /> {file.name}
+                      </p>
+                    ))}
+                  </div>
                 )}
             </div>
         </div>

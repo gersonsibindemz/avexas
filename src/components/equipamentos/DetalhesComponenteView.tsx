@@ -32,6 +32,18 @@ export const DetalhesComponenteView: React.FC<DetalhesComponenteProps> = ({ comp
         <div><label className="text-sm font-medium text-slate-500">Data de Aquisição:</label><p className="text-slate-900">{componente.dataAquisicao}</p></div>
         <div><label className="text-sm font-medium text-slate-500">Prazo de Garantia:</label><p className="text-slate-900">{componente.prazoGarantia}</p></div>
       </div>
+      {componente.document_urls && componente.document_urls.length > 0 && (
+        <div className="mt-6">
+          <label className="text-sm font-medium text-slate-500">Documentos e Imagens:</label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {componente.document_urls.map((url, index) => (
+              <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-sky-700 underline">
+                Arquivo {index + 1}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

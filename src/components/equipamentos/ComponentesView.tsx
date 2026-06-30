@@ -17,6 +17,7 @@ interface ComponentesViewProps {
 export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedComponentId }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [editingComponente, setEditingComponente] = useState<Componente | null>(null);
   const [selectedComponente, setSelectedComponente] = useState<{comp: Componente, eqNome: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -151,18 +152,30 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
   }, [selectedComponentId, equipamentos]);
 
   const saveComponente = (equipamentoId: string, comp: Componente) => {
-    setEquipamentos(equipamentos.map(eq => {
-        if (eq.id === equipamentoId) {
-            return { ...eq, componentes: [...eq.componentes, comp] };
-        }
-        return eq;
-    }));
-    setIsRegistering(false);
+    if (editingComponente) {
+      setEquipamentos(equipamentos.map(eq => {
+          if (eq.id === equipamentoId) {
+              return { ...eq, componentes: eq.componentes.map(c => c.id === comp.id ? comp : c) };
+          }
+          return eq;
+      }));
+      setEditingComponente(null);
+    } else {
+      setEquipamentos(equipamentos.map(eq => {
+          if (eq.id === equipamentoId) {
+              return { ...eq, componentes: [...eq.componentes, comp] };
+          }
+          return eq;
+      }));
+      setIsRegistering(false);
+    }
   };
 
   const handleAction = (action: string, comp: FlatComponente) => {
     if (action === 'Ver Detalhes da Componente') {
       setSelectedComponente({ comp, eqNome: comp.equipamentoNome });
+    } else if (action === 'Editar Componente') {
+      setEditingComponente(comp);
     }
   };
 
@@ -186,8 +199,8 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
     return <DetalhesComponenteView componente={selectedComponente.comp} equipamentoNome={selectedComponente.eqNome} onClose={() => setSelectedComponente(null)} />;
   }
 
-  if (isRegistering) {
-    return <CadastrarComponenteView onCancel={() => setIsRegistering(false)} onSave={saveComponente} equipamentos={equipamentos} />;
+  if (isRegistering || editingComponente) {
+    return <CadastrarComponenteView componenteToEdit={editingComponente || undefined} onCancel={() => { setIsRegistering(false); setEditingComponente(null); }} onSave={saveComponente} equipamentos={equipamentos} />;
   }
 
   return (
