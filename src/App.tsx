@@ -147,7 +147,7 @@ export default function App() {
             
             {/* User Profile Badge */}
             <div className="relative flex items-center gap-2.5 border-l border-slate-100 pl-3 md:pl-6">
-              <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white font-inter font-bold text-sm shadow-md shadow-sky-600/10 hover:bg-sky-700 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white font-inter font-bold text-sm shadow-md shadow-black/10 hover:bg-slate-900 transition-colors">
                 <User size={16} />
               </div>
               <div className="hidden md:flex flex-col text-left">

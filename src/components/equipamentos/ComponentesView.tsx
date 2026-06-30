@@ -4,6 +4,7 @@ import { ActionsMenu } from './ActionsMenu';
 import { CadastrarComponenteView } from './CadastrarComponenteView';
 import { DetalhesComponenteView } from './DetalhesComponenteView';
 import { SummaryBar } from './SummaryBar';
+import { FilterModal } from './FilterModal';
 import { supabase } from '../../lib/supabaseClient';
 import { Equipamento, Componente, AdvancedFilters } from '../../types';
 
@@ -27,6 +28,7 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isAdvancedFiltersExpanded, setIsAdvancedFiltersExpanded] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({ sort: 'name-asc', locations: [], status: [] });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
@@ -226,10 +228,9 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
       </div>
 
       {/* Filters */}
-      <div className="flex justify-between items-center bg-white p-4 border border-slate-200 shadow-sm relative">
+      <div className="grid grid-cols-2 gap-4 items-center">
         <div className="flex gap-2 items-center flex-1">
             <div className="relative flex-1 md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
                 placeholder="Pesquisar..." 
@@ -240,7 +241,7 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500" 
+                className="w-full px-4 py-2 bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500" 
               />
               {dropdownResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 shadow-lg z-50 max-h-60 overflow-y-auto">
@@ -257,82 +258,25 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
                   </div>
               )}
             </div>
-            <button onClick={handleSearch} className="flex items-center gap-2 px-3 py-2 bg-sky-600 text-white text-sm hover:bg-sky-700">
-              <Search size={16} /> Pesquisar
+            <button onClick={handleSearch} className="flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 hover:bg-slate-100">
+              <Search size={16} />
             </button>
         </div>
-        <div className="flex gap-2 items-center">
-            <div className="relative">
-                <button onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-600 hover:bg-slate-100">
-                  <Filter size={16} /> {selectedStatus || 'Status'}
-                </button>
-                {isStatusDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 shadow-lg z-50 w-40">
-                        <div className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm" onClick={() => { setSelectedStatus(null); setIsStatusDropdownOpen(false); }}>Todos</div>
-                        {['Ativo', 'Inativo', 'Manutenção'].map(status => (
-                            <div key={status} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm" onClick={() => { setSelectedStatus(status); setIsStatusDropdownOpen(false); }}>{status}</div>
-                        ))}
-                    </div>
-                )}
-            </div>
-            <button onClick={() => setIsAdvancedFiltersExpanded(!isAdvancedFiltersExpanded)} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-600 hover:bg-slate-100">
-              Filtros Avançados
-            </button>
+        <div className="flex justify-end">
+          <SummaryBar table="componentes" activeStatus={selectedStatus} onFilterClick={() => setIsFilterModalOpen(true)} />
         </div>
       </div>
       
-      {isAdvancedFiltersExpanded && (
-        <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-row gap-4 items-center">
-            <div>
-                <label className="block text-sm font-medium mb-1 text-slate-700">Ordenar por</label>
-                <select 
-                    value={advancedFilters.sort}
-                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sort: e.target.value as any }))}
-                    className="w-full p-2 border rounded text-sm text-slate-700"
-                >
-                    <option value="name-asc">Nome (A-Z)</option>
-                    <option value="name-desc">Nome (Z-A)</option>
-                    <option value="date-asc">Data de Registo (Antigos)</option>
-                    <option value="date-desc">Data de Registo (Recentes)</option>
-                </select>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium mb-1 text-slate-700">Status</label>
-                <div className="flex flex-wrap gap-2">
-                    {['Ativo', 'Inativo', 'Manutenção'].map(status => (
-                        <button 
-                            key={status}
-                            onClick={() => toggleStatusAdvanced(status)}
-                            className={`px-3 py-1 text-sm rounded-none ${advancedFilters.status.includes(status) ? 'bg-sky-100 text-sky-800' : 'bg-white border'}`}
-                        >
-                            {status}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium mb-1 text-slate-700">Localização</label>
-                <div className="flex flex-wrap gap-2">
-                    {availableLocations.map(loc => (
-                        <button 
-                            key={loc}
-                            onClick={() => toggleLocation(loc)}
-                            className={`px-3 py-1 text-sm rounded-none ${advancedFilters.locations.includes(loc) ? 'bg-sky-100 text-sky-800' : 'bg-white border'}`}
-                        >
-                            {loc}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <SummaryBar table="componentes" />
-        <div className="border border-slate-200 bg-slate-50" />
-      </div>
+      <FilterModal
+          isOpen={isFilterModalOpen}
+          onClose={() => setIsFilterModalOpen(false)}
+          statuses={['Ativo', 'Inativo', 'Manutenção']}
+          selectedStatus={selectedStatus}
+          onStatusChange={(status) => setSelectedStatus(status)}
+          advancedFilters={advancedFilters}
+          onAdvancedFiltersChange={(filters) => setAdvancedFilters(filters)}
+          availableLocations={availableLocations}
+      />
 
       {/* Table */}
       <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
