@@ -31,6 +31,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
         <div className="text-center">
             <h1 className="font-sans font-bold text-sky-100 text-4xl tracking-wider">Avexas</h1>
+            <p className="text-sky-300/70 text-[10px] mt-1 uppercase tracking-widest">Versão de Demonstração - v.Alpha</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-white p-8 shadow-2xl space-y-4">

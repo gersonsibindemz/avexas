@@ -8,10 +8,10 @@ export const DashboardView: React.FC = () => {
         <LayoutDashboard size={32} className="stroke-[1.5]" />
       </div>
       <h2 className="font-sans font-bold text-2xl text-slate-800 tracking-tight mb-2">
-        Dashboard Central
+        Painél Geral
       </h2>
       <p className="font-inter text-slate-500 text-sm max-w-md leading-relaxed mb-6">
-        Sua área principal de monitoramento e análise de métricas operacionais.
+        Sua área principal de controle e análise de métricas operacionais.
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { Layers, Plus, Search, Filter, ChevronRight, ChevronDown, MoreVertical, 
 import { ActionsMenu } from './ActionsMenu';
 import { CadastrarEquipamentoView } from './CadastrarEquipamentoView';
 import { DetalhesEquipamentoView } from './DetalhesEquipamentoView';
+import { SummaryBar } from './SummaryBar';
 import { supabase } from '../../lib/supabaseClient';
 import { Equipamento, AdvancedFilters } from '../../types';
 
@@ -62,23 +63,35 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
       item.codigo.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setIsDropdownOpen(false);
+    setLoading(true);
+    
     if (searchQuery === '') {
-        setFilteredEquipamentos(null);
+        const { data, error } = await supabase
+          .from('equipamentos')
+          .select('*, componentes (*)');
+        if (!error) setEquipamentos(data || []);
+        setLoading(false);
         return;
     }
-    const filtered = equipamentos.filter(eq => 
-        eq.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        eq.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        eq.componentes.some(c => c.nome.toLowerCase().includes(searchQuery.toLowerCase()) || c.codigo.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-    setFilteredEquipamentos(filtered);
-    if (filtered.length > 0) {
-        const newExpanded: Record<string, boolean> = {};
-        filtered.forEach(eq => newExpanded[eq.id] = true);
-        setExpandedRows(newExpanded);
+
+    const { data, error } = await supabase
+      .from('equipamentos')
+      .select('*, componentes (*)')
+      .or(`nome.ilike.%${searchQuery}%,codigo.ilike.%${searchQuery}%,componentes.nome.ilike.%${searchQuery}%,componentes.codigo.ilike.%${searchQuery}%`);
+
+    if (error) {
+        console.error('Error searching equipamentos:', error);
+    } else {
+        setEquipamentos(data || []);
+        if (data && data.length > 0) {
+            const newExpanded: Record<string, boolean> = {};
+            data.forEach(eq => newExpanded[eq.id] = true);
+            setExpandedRows(newExpanded);
+        }
     }
+    setLoading(false);
   };
 
   const handleSelect = (item: typeof allItems[0]) => {
@@ -267,6 +280,10 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
       </div>
       
 
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <SummaryBar table="equipamentos" />
+        <div className="border border-slate-200 bg-slate-50" />
+      </div>
         {isAdvancedFiltersExpanded && (
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-row gap-4 items-center">
                 <div>

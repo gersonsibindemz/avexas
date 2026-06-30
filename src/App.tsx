@@ -190,14 +190,8 @@ export default function App() {
           className="hidden md:flex md:w-64 bg-slate-900 text-slate-300 flex-col fixed inset-y-0 left-0 z-50 border-r border-slate-800 shadow-xl"
         >
           {/* Sidebar Header & Brand Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col">
-                <span className="font-sans font-black text-xl tracking-wider text-white">
-                  Avexas
-                </span>
-              </div>
-            </div>
+          <div className="h-16 flex items-center px-6 border-b border-slate-200 bg-white">
+            <img src="https://i.postimg.cc/NfvHTQTR/avexas-logo-transp-copy.png" alt="Avexas Logo" className="h-10 w-auto" />
           </div>
 
           {/* Navigation Links */}

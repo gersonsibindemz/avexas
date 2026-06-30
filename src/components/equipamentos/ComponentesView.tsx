@@ -3,6 +3,7 @@ import { Search, Filter, MoreVertical, Box, Plus } from 'lucide-react';
 import { ActionsMenu } from './ActionsMenu';
 import { CadastrarComponenteView } from './CadastrarComponenteView';
 import { DetalhesComponenteView } from './DetalhesComponenteView';
+import { SummaryBar } from './SummaryBar';
 import { supabase } from '../../lib/supabaseClient';
 import { Equipamento, Componente, AdvancedFilters } from '../../types';
 
@@ -103,18 +104,28 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
     }));
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setIsDropdownOpen(false);
+    
     if (searchQuery === '') {
         setFilteredComponentes(null);
         return;
     }
-    const filtered = ALL_COMPONENTS.filter(comp => 
-        comp.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        comp.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comp.equipamentoNome.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredComponentes(filtered);
+
+    const { data, error } = await supabase
+      .from('componentes')
+      .select('*, equipamentos(nome)')
+      .or(`nome.ilike.%${searchQuery}%,codigo.ilike.%${searchQuery}%`);
+
+    if (error) {
+        console.error('Error searching componentes:', error);
+    } else if (data) {
+        const mappedData: FlatComponente[] = data.map(c => ({
+            ...c,
+            equipamentoNome: c.equipamentos?.nome || 'Desconhecido'
+        }));
+        setFilteredComponentes(mappedData);
+    }
   };
 
   const handleSelect = (comp: FlatComponente) => {
@@ -317,6 +328,11 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
             </div>
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <SummaryBar table="componentes" />
+        <div className="border border-slate-200 bg-slate-50" />
+      </div>
 
       {/* Table */}
       <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
