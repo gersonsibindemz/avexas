@@ -3,7 +3,7 @@ export interface Componente {
   nome: string;
   codigo: string;
   localizacao: string;
-  status: 'Ativo' | 'Manutenção' | 'Inativo';
+  status: string;
   categoria: string;
   fabricante: string;
   modelo: string;
@@ -13,6 +13,7 @@ export interface Componente {
   prazoGarantia: string;
   image_url?: string | null;
   document_urls?: string[] | null;
+  equipamento_id: string;
 }
 
 export interface Equipamento {
@@ -20,7 +21,7 @@ export interface Equipamento {
   nome: string;
   codigo: string;
   localizacao: string;
-  status: 'Ativo' | 'Manutenção' | 'Inativo';
+  status: string;
   categoria: string;
   fabricante: string;
   modelo: string;

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, File } from 'lucide-react';
 import { Equipamento, Componente } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
+import { handleAppError } from '../../lib/errorHandler';
 
 interface CadastrarComponenteProps {
   onCancel: () => void;
@@ -13,7 +14,7 @@ interface CadastrarComponenteProps {
 export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ onCancel, onSave, equipamentos, componenteToEdit }) => {
   const [nome, setNome] = useState(componenteToEdit?.nome || '');
   const [equipamentoId, setEquipamentoId] = useState(componenteToEdit?.equipamento_id || equipamentos[0]?.id || '');
-  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>(componenteToEdit?.status as any || 'Ativo');
+  const [status, setStatus] = useState(componenteToEdit?.status || '');
   const [fabricante, setFabricante] = useState(componenteToEdit?.fabricante || '');
   const [modelo, setModelo] = useState(componenteToEdit?.modelo || '');
   const [numeroSerie, setNumeroSerie] = useState(componenteToEdit?.numeroSerie || '');
@@ -22,11 +23,20 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
   const [prazoGarantia, setPrazoGarantia] = useState(componenteToEdit?.prazoGarantia || '');
 
   const [files, setFiles] = useState<File[]>([]);
+  const [statuses, setStatuses] = useState<{nome: string}[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        const { data: stats } = await supabase.from('status_options').select('nome');
+        if (stats) setStatuses(stats);
+    };
+    fetchData();
+  }, []);
 
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('Usuário não autenticado');
+      handleAppError(new Error('Usuário não autenticado'), 'CadastrarComponenteView', 'Sua sessão expirou. Por favor, faça login novamente.');
       return;
     }
 
@@ -47,7 +57,7 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Error uploading file:', uploadError);
+          handleAppError(uploadError, 'CadastrarComponenteView - Upload', 'Erro ao enviar arquivo. Tente novamente.');
           continue;
         }
 
@@ -95,7 +105,7 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
     const { data, error } = result;
 
     if (error) {
-      console.error('Error saving componente:', error);
+      handleAppError(error, 'CadastrarComponenteView - Salvar', 'Erro ao salvar componente. Tente novamente.');
       return;
     }
 
@@ -128,10 +138,9 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="mt-1 block w-full border border-slate-300 p-2">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-            <option value="Manutenção">Manutenção</option>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2">
+            <option value="">Selecione...</option>
+            {statuses.map(stat => <option key={stat.nome} value={stat.nome}>{stat.nome}</option>)}
           </select>
         </div>
         <div>

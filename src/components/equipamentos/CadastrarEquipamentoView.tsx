@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, File } from 'lucide-react';
 import { Equipamento } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
+import { handleAppError } from '../../lib/errorHandler';
 
 interface CadastrarEquipamentoProps {
   onCancel: () => void;
@@ -11,9 +12,9 @@ interface CadastrarEquipamentoProps {
 
 export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ onCancel, onSave, equipamentoToEdit }) => {
   const [nome, setNome] = useState(equipamentoToEdit?.nome || '');
-  const [localizacao, setLocalizacao] = useState(equipamentoToEdit?.localizacao || 'Ala A');
-  const [status, setStatus] = useState<'Ativo' | 'Manutenção' | 'Inativo'>(equipamentoToEdit?.status as any || 'Ativo');
-  const [categoria, setCategoria] = useState(equipamentoToEdit?.categoria || 'Industrial');
+  const [localizacao, setLocalizacao] = useState(equipamentoToEdit?.localizacao || '');
+  const [status, setStatus] = useState(equipamentoToEdit?.status || '');
+  const [categoria, setCategoria] = useState(equipamentoToEdit?.categoria || '');
   const [fabricante, setFabricante] = useState(equipamentoToEdit?.fabricante || '');
   const [modelo, setModelo] = useState(equipamentoToEdit?.modelo || '');
   const [numeroSerie, setNumeroSerie] = useState(equipamentoToEdit?.numeroSerie || '');
@@ -21,11 +22,27 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
   const [dataAquisicao, setDataAquisicao] = useState(equipamentoToEdit?.dataAquisicao || '');
   const [prazoGarantia, setPrazoGarantia] = useState(equipamentoToEdit?.prazoGarantia || '');
   const [files, setFiles] = useState<File[]>([]);
+
+  const [localizacoes, setLocalizacoes] = useState<{nome: string}[]>([]);
+  const [statuses, setStatuses] = useState<{nome: string}[]>([]);
+  const [categorias, setCategorias] = useState<{nome: string}[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        const { data: locs } = await supabase.from('localizacoes').select('nome');
+        const { data: stats } = await supabase.from('status_options').select('nome');
+        const { data: cats } = await supabase.from('categorias').select('nome');
+        if (locs) setLocalizacoes(locs);
+        if (stats) setStatuses(stats);
+        if (cats) setCategorias(cats);
+    };
+    fetchData();
+  }, []);
   
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('Usuário não autenticado');
+      handleAppError(new Error('Usuário não autenticado'), 'CadastrarEquipamentoView', 'Sua sessão expirou. Por favor, faça login novamente.');
       return;
     }
 
@@ -43,7 +60,7 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Error uploading file:', uploadError);
+          handleAppError(uploadError, 'CadastrarEquipamentoView - Upload', 'Erro ao enviar arquivo. Tente novamente.');
           continue; // Skip this file if upload fails
         }
 
@@ -90,7 +107,7 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
     const { data, error } = result;
 
     if (error) {
-      console.error('Error saving equipamento:', error);
+      handleAppError(error, 'CadastrarEquipamentoView - Salvar', 'Erro ao salvar equipamento. Tente novamente.');
       return;
     }
 
@@ -118,25 +135,22 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
         <div>
           <label className="block text-sm font-medium text-slate-700">Localização</label>
           <select value={localizacao} onChange={(e) => setLocalizacao(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2">
-            <option value="Ala A">Ala A</option>
-            <option value="Ala B">Ala B</option>
-            <option value="Ala C">Ala C</option>
-            <option value="Ala D">Ala D</option>
+            <option value="">Selecione...</option>
+            {localizacoes.map(loc => <option key={loc.nome} value={loc.nome}>{loc.nome}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="mt-1 block w-full border border-slate-300 p-2">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-            <option value="Manutenção">Manutenção</option>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2">
+            <option value="">Selecione...</option>
+            {statuses.map(stat => <option key={stat.nome} value={stat.nome}>{stat.nome}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Categoria</label>
           <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2">
-            <option value="Industrial">Industrial</option>
-            <option value="Escritório">Escritório</option>
+            <option value="">Selecione...</option>
+            {categorias.map(cat => <option key={cat.nome} value={cat.nome}>{cat.nome}</option>)}
           </select>
         </div>
         <div>

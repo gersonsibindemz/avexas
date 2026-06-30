@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { 
   LayoutDashboard, 
   Wrench, 
@@ -109,6 +110,7 @@ export default function App() {
 
   return (
     <>
+      <Toaster position="top-right" richColors />
       {!isLoggedIn ? (
         <LoginView onLogin={() => {}} />
       ) : (
@@ -215,7 +217,6 @@ export default function App() {
                 <LayoutDashboard size={18} className={currentView === 'dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                 <span>Dashboard</span>
               </div>
-              <span className={`w-1.5 h-1.5 rounded-full bg-sky-400 transition-opacity ${currentView === 'dashboard' ? 'opacity-100' : 'opacity-0'}`} />
             </button>
 
             {/* Equipamentos Navigation Block */}
@@ -509,7 +510,7 @@ export default function App() {
             <div className="bg-white p-6 shadow-2xl w-full max-w-sm text-center">
               <p className="text-slate-800 font-medium mb-6">Tem certeza que pretende encerrar a sessão?</p>
               <div className="flex gap-4 justify-center">
-                <button onClick={() => setIsLogoutConfirmOpen(false)} className="px-6 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-none border border-slate-200">Não</button>
+                <button onClick={() => setIsLogoutConfirmOpen(false)} className="px-6 py-2 text-sm bg-sky-600 text-white hover:bg-sky-700 rounded-none">Não</button>
                 <button onClick={handleLogout} className="px-6 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-none">Sim</button>
               </div>
             </div>
