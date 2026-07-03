@@ -191,7 +191,7 @@ export default function App() {
         >
           {/* Sidebar Header & Brand Logo */}
           <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-            <img src="/assets/images/avexas_logo_white.png" alt="Avexas Logo" className="h-10 w-auto" />
+            <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-10 w-auto" />
           </div>
 
           {/* Navigation Links */}
