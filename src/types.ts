@@ -29,6 +29,8 @@ export interface Equipamento {
   anoFabricacao: string;
   dataAquisicao: string;
   prazoGarantia: string;
+  grupoSubgrupo?: string | null;
+  criticidade?: string | null;
   image_url?: string | null;
   document_urls?: string[] | null;
   componentes: Componente[];

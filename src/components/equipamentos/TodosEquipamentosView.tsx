@@ -219,10 +219,12 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
       {/* Top Controls */}
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-slate-800">Todos os Equipamentos</h1>
-        <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-          <Plus size={16} />
-          Novo Equipamento
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+            <Plus size={16} />
+            Novo Equipamento
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

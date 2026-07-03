@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, File } from 'lucide-react';
+import { X, Upload, File, Loader2 } from 'lucide-react';
 import { Equipamento, Componente } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 import { handleAppError } from '../../lib/errorHandler';
+import { ImportModal } from './ImportModal';
 
 interface CadastrarComponenteProps {
   onCancel: () => void;
@@ -12,6 +13,7 @@ interface CadastrarComponenteProps {
 }
 
 export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ onCancel, onSave, equipamentos, componenteToEdit }) => {
+  const [codigo, setCodigo] = useState(componenteToEdit?.codigo || '');
   const [nome, setNome] = useState(componenteToEdit?.nome || '');
   const [equipamentoId, setEquipamentoId] = useState(componenteToEdit?.equipamento_id || equipamentos[0]?.id || '');
   const [status, setStatus] = useState(componenteToEdit?.status || '');
@@ -24,6 +26,41 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
 
   const [files, setFiles] = useState<File[]>([]);
   const [statuses, setStatuses] = useState<{nome: string}[]>([]);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleImportComponentes = async (data: string[][]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Usuário não autenticado');
+      return;
+    }
+    
+    let successCount = 0;
+    for (const row of data) {
+      const novaComponente = {
+        equipamento_id: row[0],
+        nome: row[1],
+        codigo: row[2],
+        status: row[3],
+        fabricante: row[4],
+        modelo: row[5],
+        numeroSerie: row[6],
+        anoFabricacao: row[7],
+        dataAquisicao: row[8],
+        prazoGarantia: row[9],
+        user_id: user.id,
+      };
+
+      const { error } = await supabase.from('componentes').insert([novaComponente]);
+      if (!error) {
+        successCount++;
+      }
+    }
+    
+    alert(`${successCount} componentes importados com sucesso!`);
+    window.location.reload(); 
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,82 +71,87 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
   }, []);
 
   const handleSave = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      handleAppError(new Error('Usuário não autenticado'), 'CadastrarComponenteView', 'Sua sessão expirou. Por favor, faça login novamente.');
-      return;
-    }
-
-    const eq = equipamentos.find(e => e.id === equipamentoId);
-    if (!eq) return;
-
-    let documentUrls: string[] = componenteToEdit?.document_urls || [];
-    
-    if (files.length > 0) {
-      const newDocumentUrls: string[] = [];
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `componentes/${fileName}`;
-
-        const { data, error: uploadError } = await supabase.storage
-          .from('assets')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          handleAppError(uploadError, 'CadastrarComponenteView - Upload', 'Erro ao enviar arquivo. Tente novamente.');
-          continue;
+    setLoading(true);
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          handleAppError(new Error('Usuário não autenticado'), 'CadastrarComponenteView', 'Sua sessão expirou. Por favor, faça login novamente.');
+          return;
         }
 
-        const { data: publicUrlData } = supabase.storage
-          .from('assets')
-          .getPublicUrl(filePath);
+        const eq = equipamentos.find(e => e.id === equipamentoId);
+        if (!eq) return;
+
+        let documentUrls: string[] = componenteToEdit?.document_urls || [];
         
-        newDocumentUrls.push(publicUrlData.publicUrl);
-      }
-      documentUrls = newDocumentUrls;
+        if (files.length > 0) {
+          const newDocumentUrls: string[] = [];
+          for (const file of files) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `componentes/${fileName}`;
+
+            const { data, error: uploadError } = await supabase.storage
+              .from('assets')
+              .upload(filePath, file);
+
+            if (uploadError) {
+              handleAppError(uploadError, 'CadastrarComponenteView - Upload', 'Erro ao enviar arquivo. Tente novamente.');
+              continue;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from('assets')
+              .getPublicUrl(filePath);
+            
+            newDocumentUrls.push(publicUrlData.publicUrl);
+          }
+          documentUrls = newDocumentUrls;
+        }
+
+        const novaComponente = {
+          equipamento_id: equipamentoId, // Assumindo coluna FK
+          nome,
+          codigo,
+          localizacao: eq.localizacao,
+          status,
+          categoria: eq.categoria,
+          fabricante,
+          modelo,
+          numeroSerie,
+          anoFabricacao,
+          dataAquisicao,
+          prazoGarantia,
+          image_url: documentUrls.length > 0 ? documentUrls[0] : null,
+          document_urls: documentUrls,
+          user_id: user.id,
+        };
+
+        let query = supabase.from('componentes');
+        let result;
+
+        if (componenteToEdit) {
+          result = await query
+            .update(novaComponente)
+            .eq('id', componenteToEdit.id)
+            .select();
+        } else {
+          result = await query
+            .insert([novaComponente])
+            .select();
+        }
+
+        const { data, error } = result;
+
+        if (error) {
+          handleAppError(error, 'CadastrarComponenteView - Salvar', 'Erro ao salvar componente. Tente novamente.');
+          return;
+        }
+
+        onSave(equipamentoId, data[0] as Componente);
+    } finally {
+        setLoading(false);
     }
-
-    const novaComponente = {
-      equipamento_id: equipamentoId, // Assumindo coluna FK
-      nome,
-      codigo: componenteToEdit?.codigo || 'COMP-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-      localizacao: eq.localizacao,
-      status,
-      categoria: eq.categoria,
-      fabricante,
-      modelo,
-      numeroSerie,
-      anoFabricacao,
-      dataAquisicao,
-      prazoGarantia,
-      image_url: documentUrls.length > 0 ? documentUrls[0] : null,
-      document_urls: documentUrls,
-      user_id: user.id,
-    };
-
-    let query = supabase.from('componentes');
-    let result;
-
-    if (componenteToEdit) {
-      result = await query
-        .update(novaComponente)
-        .eq('id', componenteToEdit.id)
-        .select();
-    } else {
-      result = await query
-        .insert([novaComponente])
-        .select();
-    }
-
-    const { data, error } = result;
-
-    if (error) {
-      handleAppError(error, 'CadastrarComponenteView - Salvar', 'Erro ao salvar componente. Tente novamente.');
-      return;
-    }
-
-    onSave(equipamentoId, data[0] as Componente);
   };
 
   return (
@@ -124,7 +166,7 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
       <div className="grid grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-slate-700">Código da Componente</label>
-          <input type="text" disabled value="Auto-gerado" className="mt-1 block w-full border border-slate-300 p-2 bg-slate-50" />
+          <input type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Nome da Componente</label>
@@ -190,10 +232,22 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
         </div>
       </div>
       
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 items-center">
+        <button onClick={() => setIsImportModalOpen(true)} className="text-sky-600 underline text-sm">Importar via Copiar/Colar</button>
         <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Cancelar</button>
-        <button onClick={handleSave} className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700">Salvar</button>
+        <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400">
+            {loading && <Loader2 className="animate-spin" size={16} />}
+            {loading ? 'Salvando...' : 'Salvar'}
+        </button>
       </div>
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportComponentes}
+        title="Importar Componentes"
+        headers={["ID Equipamento", "Nome", "Código", "Status", "Fabricante", "Modelo", "Número Série", "Ano Fabricação", "Data Aquisição", "Prazo Garantia"]}
+      />
     </div>
   );
 };
