@@ -1,6 +1,7 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import { Equipamento } from './TodosEquipamentosView';
+import { downloadExcel } from '../../lib/excelExport';
 
 interface DetalhesEquipamentoProps {
   equipamento: Equipamento;
@@ -8,13 +9,37 @@ interface DetalhesEquipamentoProps {
 }
 
 export const DetalhesEquipamentoView: React.FC<DetalhesEquipamentoProps> = ({ equipamento, onClose }) => {
+  const handleDownload = () => {
+    const headersMap = {
+      nome: 'Nome',
+      codigo: 'Código',
+      localizacao: 'Localização',
+      status: 'Status',
+      categoria: 'Categoria',
+      fabricante: 'Fabricante',
+      modelo: 'Modelo',
+      numeroSerie: 'Número de Série',
+      anoFabricacao: 'Ano de Fabricação',
+      dataAquisicao: 'Data de Aquisição',
+      prazoGarantia: 'Prazo de Garantia',
+      grupo_subgrupo: 'Grupo/Subgrupo',
+      criticidade: 'Criticidade'
+    };
+    downloadExcel(equipamento, `Equipamento_${equipamento.nome}`, headersMap);
+  };
+
   return (
     <div className="flex-1 p-6 bg-white border border-slate-200 shadow-sm space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-slate-800">Detalhes do Equipamento: {equipamento.nome}</h2>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
-          <X size={24} />
-        </button>
+        <div className="flex gap-2">
+            <button onClick={handleDownload} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded">
+                <Download size={16} /> Baixar Detalhes
+            </button>
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+            <X size={24} />
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

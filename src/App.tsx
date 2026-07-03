@@ -20,17 +20,32 @@ import {
   Smartphone,
   Layers,
   ArrowRight,
-  Trash2
+  Trash2,
+  Calendar,
+  ClipboardList,
+  Users,
+  Package,
+  ShoppingCart,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { TodosEquipamentosView } from './components/equipamentos/TodosEquipamentosView';
 import { ComponentesView } from './components/equipamentos/ComponentesView';
+import { PlanoManutencaoView } from './components/manutencao/PlanoManutencaoView';
+import { OrdensManutencaoView } from './components/manutencao/OrdensManutencaoView';
+import { EquipesManutencaoView } from './components/manutencao/EquipesManutencaoView';
+import { NotificacoesView } from './components/notificacoes/NotificacoesView';
+import { EstoquePecasView } from './components/estoque/EstoquePecasView';
+import { ComprasFaturacaoView } from './components/compras/ComprasFaturacaoView';
+import { RelatoriosView } from './components/relatorios/RelatoriosView';
+import { ConfiguracoesView } from './components/configuracoes/ConfiguracoesView';
 import { supabase } from './lib/supabaseClient';
 
 // Type definitions for views
-type ActiveView = 'dashboard' | 'todos' | 'componentes';
+type ActiveView = 'dashboard' | 'todos' | 'componentes' | 'plano_manutencao' | 'ordens_manutencao' | 'equipes_manutencao' | 'notificacoes' | 'estoque_pecas' | 'compras_faturacao' | 'relatorios' | 'configuracoes';
 
 interface UserProfile {
   name: string;
@@ -96,6 +111,22 @@ export default function App() {
         return 'Equipamentos > Todos';
       case 'componentes':
         return 'Equipamentos > Componentes';
+      case 'plano_manutencao':
+        return 'Plano de Manutenção';
+      case 'ordens_manutencao':
+        return 'Ordens de Manutenção';
+      case 'equipes_manutencao':
+        return 'Equipes de Manutenção';
+      case 'notificacoes':
+        return 'Notificações';
+      case 'estoque_pecas':
+        return 'Estoque de Peças';
+      case 'compras_faturacao':
+        return 'Compras & Faturação';
+      case 'relatorios':
+        return 'Relatórios';
+      case 'configuracoes':
+        return 'Configurações';
       default:
         return 'Dashboard';
     }
@@ -208,6 +239,7 @@ export default function App() {
               }`}
             >
               <div className="flex items-center gap-3">
+                <span className="text-xs font-bold w-4 text-slate-500 group-hover:text-slate-400">1</span>
                 <LayoutDashboard size={18} className={currentView === 'dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                 <span>Dashboard</span>
               </div>
@@ -223,17 +255,15 @@ export default function App() {
                     : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
                 }`}
               >
-                {/* Clicking directly on "Equipamentos" only toggles the submenu */}
                 <button
                   id="nav-equipamentos-text-desktop"
                   onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                   className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
                 >
+                  <span className="text-xs font-bold w-4 text-slate-500">2</span>
                   <Wrench size={18} className={currentView === 'todos' || currentView === 'componentes' ? 'text-sky-300' : 'text-slate-400'} />
                   <span>Equipamentos</span>
                 </button>
-
-                {/* Clicking ONLY on the arrow toggles the dropdown submenu */}
                 <button
                   id="nav-equipamentos-arrow-desktop"
                   onClick={(e) => {
@@ -294,6 +324,34 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
+            
+            {/* New Modules */}
+            {[
+              { id: 'plano_manutencao', number: '3', title: 'Plano de Manutenção', icon: Calendar },
+              { id: 'ordens_manutencao', number: '4', title: 'Ordens de Manutenção', icon: ClipboardList },
+              { id: 'equipes_manutencao', number: '5', title: 'Equipes de Manutenção', icon: Users },
+              { id: 'notificacoes', number: '6', title: 'Notificações', icon: Bell },
+              { id: 'estoque_pecas', number: '7', title: 'Estoque de Peças', icon: Package },
+              { id: 'compras_faturacao', number: '8', title: 'Compras & Faturação', icon: ShoppingCart },
+              { id: 'relatorios', number: '9', title: 'Relatórios', icon: BarChart3 },
+              { id: 'configuracoes', number: '10', title: 'Configurações', icon: Settings },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleViewChange(item.id as ActiveView)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-none text-sm font-sans font-medium transition-all duration-150 group ${
+                  currentView === item.id 
+                    ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/10' 
+                    : 'hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-3 whitespace-nowrap">
+                  <span className="text-xs font-bold w-4 text-slate-500 group-hover:text-slate-400">{item.number}</span>
+                  <item.icon size={18} className={currentView === item.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                  <span>{item.title}</span>
+                </div>
+              </button>
+            ))}
 
           </nav>
 
@@ -354,6 +412,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold w-4 text-slate-500">1</span>
                       <LayoutDashboard size={18} />
                       <span>Dashboard</span>
                     </div>
@@ -374,6 +433,7 @@ export default function App() {
                         onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                         className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
                       >
+                        <span className="text-xs font-bold w-4 text-slate-500">2</span>
                         <Wrench size={18} />
                         <span>Equipamentos</span>
                       </button>
@@ -430,6 +490,34 @@ export default function App() {
                       )}
                     </AnimatePresence>
                   </div>
+                  
+                  {/* New Modules Mobile */}
+                  {[
+                    { id: 'plano_manutencao', number: '3', title: 'Plano de Manutenção', icon: Calendar },
+                    { id: 'ordens_manutencao', number: '4', title: 'Ordens de Manutenção', icon: ClipboardList },
+                    { id: 'equipes_manutencao', number: '5', title: 'Equipes de Manutenção', icon: Users },
+                    { id: 'notificacoes', number: '6', title: 'Notificações', icon: Bell },
+                    { id: 'estoque_pecas', number: '7', title: 'Estoque de Peças', icon: Package },
+                    { id: 'compras_faturacao', number: '8', title: 'Compras & Faturação', icon: ShoppingCart },
+                    { id: 'relatorios', number: '9', title: 'Relatórios', icon: BarChart3 },
+                    { id: 'configuracoes', number: '10', title: 'Configurações', icon: Settings },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleViewChange(item.id as ActiveView)}
+                      className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-sm font-sans font-medium transition-all ${
+                        currentView === item.id 
+                          ? 'bg-sky-600 text-white font-bold' 
+                          : 'hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 whitespace-nowrap">
+                        <span className="text-xs font-bold w-4 text-slate-500">{item.number}</span>
+                        <item.icon size={18} />
+                        <span>{item.title}</span>
+                      </div>
+                    </button>
+                  ))}
 
                 </nav>
 
@@ -488,6 +576,14 @@ export default function App() {
                   {currentView === 'dashboard' && <DashboardView />}
                   {currentView === 'todos' && <TodosEquipamentosView onNavigateToComponent={(id) => handleViewChange('componentes', id)} />}
                   {currentView === 'componentes' && <ComponentesView selectedComponentId={selectedComponentId} />}
+                  {currentView === 'plano_manutencao' && <PlanoManutencaoView />}
+                  {currentView === 'ordens_manutencao' && <OrdensManutencaoView />}
+                  {currentView === 'equipes_manutencao' && <EquipesManutencaoView />}
+                  {currentView === 'notificacoes' && <NotificacoesView />}
+                  {currentView === 'estoque_pecas' && <EstoquePecasView />}
+                  {currentView === 'compras_faturacao' && <ComprasFaturacaoView />}
+                  {currentView === 'relatorios' && <RelatoriosView />}
+                  {currentView === 'configuracoes' && <ConfiguracoesView />}
 
 
                 </motion.div>
