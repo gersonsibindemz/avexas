@@ -27,7 +27,8 @@ import {
   Package,
   ShoppingCart,
   BarChart3,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
@@ -42,10 +43,11 @@ import { EstoquePecasView } from './components/estoque/EstoquePecasView';
 import { ComprasFaturacaoView } from './components/compras/ComprasFaturacaoView';
 import { RelatoriosView } from './components/relatorios/RelatoriosView';
 import { ConfiguracoesView } from './components/configuracoes/ConfiguracoesView';
+import { FichaTecnicaView } from './components/relatorios/FichaTecnicaView';
 import { supabase } from './lib/supabaseClient';
 
 // Type definitions for views
-type ActiveView = 'dashboard' | 'todos' | 'componentes' | 'plano_manutencao' | 'ordens_manutencao' | 'equipes_manutencao' | 'notificacoes' | 'estoque_pecas' | 'compras_faturacao' | 'relatorios' | 'configuracoes';
+type ActiveView = 'dashboard' | 'todos' | 'componentes' | 'plano_manutencao' | 'ordens_manutencao' | 'equipes_manutencao' | 'notificacoes' | 'estoque_pecas' | 'compras_faturacao' | 'relatorios' | 'configuracoes' | 'fichatecnica';
 
 interface UserProfile {
   name: string;
@@ -127,6 +129,8 @@ export default function App() {
         return 'Relatórios';
       case 'configuracoes':
         return 'Configurações';
+      case 'fichatecnica':
+        return 'Ficha Técnica';
       default:
         return 'Dashboard';
     }
@@ -239,7 +243,6 @@ export default function App() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold w-4 text-slate-500 group-hover:text-slate-400">1</span>
                 <LayoutDashboard size={18} className={currentView === 'dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                 <span>Dashboard</span>
               </div>
@@ -260,7 +263,6 @@ export default function App() {
                   onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                   className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
                 >
-                  <span className="text-xs font-bold w-4 text-slate-500">2</span>
                   <Wrench size={18} className={currentView === 'todos' || currentView === 'componentes' ? 'text-sky-300' : 'text-slate-400'} />
                   <span>Equipamentos</span>
                 </button>
@@ -327,14 +329,15 @@ export default function App() {
             
             {/* New Modules */}
             {[
-              { id: 'plano_manutencao', number: '3', title: 'Plano de Manutenção', icon: Calendar },
-              { id: 'ordens_manutencao', number: '4', title: 'Ordens de Manutenção', icon: ClipboardList },
-              { id: 'equipes_manutencao', number: '5', title: 'Equipes de Manutenção', icon: Users },
-              { id: 'notificacoes', number: '6', title: 'Notificações', icon: Bell },
-              { id: 'estoque_pecas', number: '7', title: 'Estoque de Peças', icon: Package },
-              { id: 'compras_faturacao', number: '8', title: 'Compras & Faturação', icon: ShoppingCart },
-              { id: 'relatorios', number: '9', title: 'Relatórios', icon: BarChart3 },
-              { id: 'configuracoes', number: '10', title: 'Configurações', icon: Settings },
+              { id: 'plano_manutencao', title: 'Plano de Manutenção', icon: Calendar },
+              { id: 'ordens_manutencao', title: 'Ordens de Manutenção', icon: ClipboardList },
+              { id: 'equipes_manutencao', title: 'Equipes de Manutenção', icon: Users },
+              { id: 'notificacoes', title: 'Notificações', icon: Bell },
+              { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
+              { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
+              { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
+              { id: 'configuracoes', title: 'Configurações', icon: Settings },
+              { id: 'fichatecnica', title: 'Ficha Técnica', icon: FileText },
             ].map((item) => (
               <button
                 key={item.id}
@@ -346,7 +349,6 @@ export default function App() {
                 }`}
               >
                 <div className="flex items-center gap-3 whitespace-nowrap">
-                  <span className="text-xs font-bold w-4 text-slate-500 group-hover:text-slate-400">{item.number}</span>
                   <item.icon size={18} className={currentView === item.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                   <span>{item.title}</span>
                 </div>
@@ -412,7 +414,6 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold w-4 text-slate-500">1</span>
                       <LayoutDashboard size={18} />
                       <span>Dashboard</span>
                     </div>
@@ -433,7 +434,6 @@ export default function App() {
                         onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                         className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
                       >
-                        <span className="text-xs font-bold w-4 text-slate-500">2</span>
                         <Wrench size={18} />
                         <span>Equipamentos</span>
                       </button>
@@ -493,14 +493,15 @@ export default function App() {
                   
                   {/* New Modules Mobile */}
                   {[
-                    { id: 'plano_manutencao', number: '3', title: 'Plano de Manutenção', icon: Calendar },
-                    { id: 'ordens_manutencao', number: '4', title: 'Ordens de Manutenção', icon: ClipboardList },
-                    { id: 'equipes_manutencao', number: '5', title: 'Equipes de Manutenção', icon: Users },
-                    { id: 'notificacoes', number: '6', title: 'Notificações', icon: Bell },
-                    { id: 'estoque_pecas', number: '7', title: 'Estoque de Peças', icon: Package },
-                    { id: 'compras_faturacao', number: '8', title: 'Compras & Faturação', icon: ShoppingCart },
-                    { id: 'relatorios', number: '9', title: 'Relatórios', icon: BarChart3 },
-                    { id: 'configuracoes', number: '10', title: 'Configurações', icon: Settings },
+                    { id: 'plano_manutencao', title: 'Plano de Manutenção', icon: Calendar },
+                    { id: 'ordens_manutencao', title: 'Ordens de Manutenção', icon: ClipboardList },
+                    { id: 'equipes_manutencao', title: 'Equipes de Manutenção', icon: Users },
+                    { id: 'notificacoes', title: 'Notificações', icon: Bell },
+                    { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
+                    { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
+                    { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
+                    { id: 'configuracoes', title: 'Configurações', icon: Settings },
+                    { id: 'fichatecnica', title: 'Ficha Técnica', icon: FileText },
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -512,7 +513,6 @@ export default function App() {
                       }`}
                     >
                       <div className="flex items-center gap-3 whitespace-nowrap">
-                        <span className="text-xs font-bold w-4 text-slate-500">{item.number}</span>
                         <item.icon size={18} />
                         <span>{item.title}</span>
                       </div>
@@ -584,6 +584,7 @@ export default function App() {
                   {currentView === 'compras_faturacao' && <ComprasFaturacaoView />}
                   {currentView === 'relatorios' && <RelatoriosView />}
                   {currentView === 'configuracoes' && <ConfiguracoesView />}
+                  {currentView === 'fichatecnica' && <FichaTecnicaView />}
 
 
                 </motion.div>

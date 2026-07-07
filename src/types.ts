@@ -14,6 +14,10 @@ export interface Componente {
   image_url?: string | null;
   document_urls?: string[] | null;
   equipamento_id: string;
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
 }
 
 export interface Equipamento {
@@ -34,6 +38,10 @@ export interface Equipamento {
   image_url?: string | null;
   document_urls?: string[] | null;
   componentes: Componente[];
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
 }
 
 export interface AdvancedFilters {

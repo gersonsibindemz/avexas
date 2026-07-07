@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Download } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 import { Equipamento } from './TodosEquipamentosView';
-import { downloadExcel } from '../../lib/excelExport';
 
 interface DetalhesEquipamentoProps {
   equipamento: Equipamento;
@@ -9,23 +9,44 @@ interface DetalhesEquipamentoProps {
 }
 
 export const DetalhesEquipamentoView: React.FC<DetalhesEquipamentoProps> = ({ equipamento, onClose }) => {
-  const handleDownload = () => {
-    const headersMap = {
-      nome: 'Nome',
-      codigo: 'Código',
-      localizacao: 'Localização',
-      status: 'Status',
-      categoria: 'Categoria',
-      fabricante: 'Fabricante',
-      modelo: 'Modelo',
-      numeroSerie: 'Número de Série',
-      anoFabricacao: 'Ano de Fabricação',
-      dataAquisicao: 'Data de Aquisição',
-      prazoGarantia: 'Prazo de Garantia',
-      grupo_subgrupo: 'Grupo/Subgrupo',
-      criticidade: 'Criticidade'
-    };
-    downloadExcel(equipamento, `Equipamento_${equipamento.nome}`, headersMap);
+  const [loading, setLoading] = React.useState(false);
+
+// No arquivo /src/components/equipamentos/DetalhesEquipamentoView.tsx
+
+  const handleDownload = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('Invocando função gerar-ficha-tecnica...');
+      const response = await supabase.functions.invoke('gerar-ficha-tecnica', {
+        body: { equipamentoId: equipamento.id },
+      });
+
+      console.log('Resposta da função:', response);
+
+      if (response.error) {
+        console.error('Erro na resposta da função:', response.error);
+        throw response.error;
+      }
+
+      // Garantir que tratamos 'data' como binário (Blob)
+      const blob = new Blob([response.data as BlobPart], { type: 'application/pdf' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FichaTecnica_${equipamento.nome}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Erro completo ao gerar PDF:', error);
+      alert('Erro ao gerar ficha técnica. Verifique o console para detalhes técnicos.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,8 +54,8 @@ export const DetalhesEquipamentoView: React.FC<DetalhesEquipamentoProps> = ({ eq
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-slate-800">Detalhes do Equipamento: {equipamento.nome}</h2>
         <div className="flex gap-2">
-            <button onClick={handleDownload} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded">
-                <Download size={16} /> Baixar Detalhes
+            <button onClick={handleDownload} disabled={loading} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded disabled:bg-sky-100/50">
+                <Download size={16} /> {loading ? 'Gerando...' : 'Baixar Ficha Técnica'}
             </button>
             <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
             <X size={24} />

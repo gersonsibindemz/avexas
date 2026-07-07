@@ -247,7 +247,7 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
             </select>
         </div>
         <div>
-            <label className="block text-sm font-medium text-slate-700">Ficha Técnica</label>
+            <label className="block text-sm font-medium text-slate-700">Anexo</label>
             <div className="mt-1 flex flex-col items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed cursor-pointer bg-slate-50 hover:bg-slate-100">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -270,7 +270,7 @@ export const CadastrarEquipamentoView: React.FC<CadastrarEquipamentoProps> = ({ 
       </div>
       
       <div className="flex justify-end gap-4 items-center">
-        <button onClick={() => setIsImportModalOpen(true)} className="text-sky-600 underline text-sm">Importar via Copiar/Colar</button>
+        <button onClick={() => setIsImportModalOpen(true)} className="text-sky-600 underline text-sm">Importar Planilha</button>
         <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Cancelar</button>
         <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400">
             {loading && <Loader2 className="animate-spin" size={16} />}

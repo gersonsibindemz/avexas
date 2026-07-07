@@ -3,7 +3,6 @@ import { X, Upload, File, Loader2 } from 'lucide-react';
 import { Equipamento, Componente } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 import { handleAppError } from '../../lib/errorHandler';
-import { ImportModal } from './ImportModal';
 
 interface CadastrarComponenteProps {
   onCancel: () => void;
@@ -26,41 +25,8 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
 
   const [files, setFiles] = useState<File[]>([]);
   const [statuses, setStatuses] = useState<{nome: string}[]>([]);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleImportComponentes = async (data: string[][]) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('Usuário não autenticado');
-      return;
-    }
-    
-    let successCount = 0;
-    for (const row of data) {
-      const novaComponente = {
-        equipamento_id: row[0],
-        nome: row[1],
-        codigo: row[2],
-        status: row[3],
-        fabricante: row[4],
-        modelo: row[5],
-        numeroSerie: row[6],
-        anoFabricacao: row[7],
-        dataAquisicao: row[8],
-        prazoGarantia: row[9],
-        user_id: user.id,
-      };
-
-      const { error } = await supabase.from('componentes').insert([novaComponente]);
-      if (!error) {
-        successCount++;
-      }
-    }
-    
-    alert(`${successCount} componentes importados com sucesso!`);
-    window.location.reload(); 
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -210,7 +176,7 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
           <input type="date" value={prazoGarantia} onChange={(e) => setPrazoGarantia(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2" />
         </div>
         <div>
-            <label className="block text-sm font-medium text-slate-700">Ficha Técnica</label>
+            <label className="block text-sm font-medium text-slate-700">Anexo</label>
             <div className="mt-1 flex flex-col items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed cursor-pointer bg-slate-50 hover:bg-slate-100">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -233,21 +199,12 @@ export const CadastrarComponenteView: React.FC<CadastrarComponenteProps> = ({ on
       </div>
       
       <div className="flex justify-end gap-4 items-center">
-        <button onClick={() => setIsImportModalOpen(true)} className="text-sky-600 underline text-sm">Importar via Copiar/Colar</button>
         <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Cancelar</button>
         <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400">
             {loading && <Loader2 className="animate-spin" size={16} />}
             {loading ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
-
-      <ImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImport={handleImportComponentes}
-        title="Importar Componentes"
-        headers={["ID Equipamento", "Nome", "Código", "Status", "Fabricante", "Modelo", "Número Série", "Ano Fabricação", "Data Aquisição", "Prazo Garantia"]}
-      />
     </div>
   );
 };

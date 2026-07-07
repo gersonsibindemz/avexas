@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -14,6 +15,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Modelo");
+    XLSX.writeFile(wb, "modelo_importacao.xlsx");
+  };
 
   const handleImport = async () => {
     if (!pastedData) return;
@@ -35,12 +43,14 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-4xl">
-        <h2 className="text-xl font-bold mb-4">{title}</h2>
-        <p className="mb-2 text-sm text-slate-600">Cole os dados abaixo (sem os cabeçalhos):</p>
-        <div className="mb-4 flex gap-1 text-xs bg-slate-100 p-2 border border-slate-300">
-            {headers.map(h => <span key={h} className="font-mono bg-white px-1 border border-slate-200">{h}</span>)}
+      <div className="bg-white p-6 rounded-none w-full max-w-4xl">
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">{title}</h2>
+            <button onClick={downloadTemplate} className="flex items-center gap-2 text-sm text-sky-600 hover:underline">
+                <Download size={16} /> Baixar Planilha Modelo
+            </button>
         </div>
+        <p className="mb-2 text-sm text-slate-600">Cole os dados abaixo (sem os cabeçalhos):</p>
         <textarea 
             value={pastedData}
             onChange={(e) => setPastedData(e.target.value)}

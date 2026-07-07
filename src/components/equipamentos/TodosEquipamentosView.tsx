@@ -332,11 +332,14 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
                     />
                   </td>
                 </tr>
-                {expandedRows[eq.id] && eq.componentes.map(comp => (
+                {expandedRows[eq.id] && eq.componentes.map((comp, index) => (
                   <tr key={comp.id} className="bg-slate-50/50 cursor-pointer hover:bg-slate-100" onClick={() => onNavigateToComponent(comp.id)}>
-                    <td className="px-6 py-3 pl-16">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <CornerDownRight size={16} className="text-slate-400" />
+                    <td className="px-6 py-3 pl-16 relative">
+                      {/* Vertical line - connect top to bottom */}
+                      <div className={`absolute left-[54px] w-[2px] bg-slate-200 ${index === 0 ? 'top-0' : '-top-3'} ${index === eq.componentes.length - 1 ? 'h-1/2' : 'bottom-0'}`} />
+                      {/* Horizontal line */}
+                      <div className="absolute left-[54px] top-1/2 w-4 h-[2px] bg-slate-200" />
+                      <div className="flex items-center gap-2 text-slate-600 ml-6">
                         <Box size={16} className="text-slate-400" />
                         {comp.nome}
                       </div>
