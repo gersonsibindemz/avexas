@@ -254,7 +254,7 @@ export default function App() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 py-6 px-4 space-y-1">
+          <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
             
             {/* Dashboard Navigation */}
             <button
@@ -361,7 +361,6 @@ export default function App() {
               { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
               { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
               { id: 'configuracoes', title: 'Configurações', icon: Settings },
-              { id: 'fichatecnica', title: 'Ficha Técnica', icon: FileText },
             ].map((item) => (
               <button
                 key={item.id}
@@ -525,7 +524,6 @@ export default function App() {
                     { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
                     { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
                     { id: 'configuracoes', title: 'Configurações', icon: Settings },
-                    { id: 'fichatecnica', title: 'Ficha Técnica', icon: FileText },
                   ].map((item) => (
                     <button
                       key={item.id}
