@@ -35,6 +35,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { TodosEquipamentosView } from './components/equipamentos/TodosEquipamentosView';
+import { DetalhesEquipamentoPage } from './components/equipamentos/DetalhesEquipamentoPage';
 import { ComponentesView } from './components/equipamentos/ComponentesView';
 import { PlanoManutencaoView } from './components/manutencao/PlanoManutencaoView';
 import { OrdensManutencaoView } from './components/manutencao/OrdensManutencaoView';
@@ -599,6 +600,7 @@ export default function App() {
                   <Routes>
                     <Route path="/dashboard" element={<DashboardView />} />
                     <Route path="/equipamentos" element={<TodosEquipamentosView onNavigateToComponent={(id) => handleViewChange('componentes', id)} />} />
+                    <Route path="/equipamentos/:id" element={<DetalhesEquipamentoPage />} />
                     <Route path="/equipamentos/componentes" element={<ComponentesView selectedComponentId={selectedComponentId} />} />
                     <Route path="/plano-manutencao" element={<PlanoManutencaoView />} />
                     <Route path="/ordens-manutencao" element={<OrdensManutencaoView />} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Equipamento } from '../equipamentos/TodosEquipamentosView';
+import { Equipamento } from '../../types';
 
 interface FichaTecnicaProps {
   equipamento: Equipamento;

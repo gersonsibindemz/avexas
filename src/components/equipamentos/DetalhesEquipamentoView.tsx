@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
-import { Equipamento } from './TodosEquipamentosView';
+import { Equipamento } from '../../types';
 
 interface DetalhesEquipamentoProps {
   equipamento: Equipamento;
