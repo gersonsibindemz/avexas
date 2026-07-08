@@ -17,20 +17,25 @@ export const DetalhesEquipamentoView: React.FC<DetalhesEquipamentoProps> = ({ eq
     try {
       setLoading(true);
       
-      console.log('Invocando função gerar-ficha-tecnica...');
-      const response = await supabase.functions.invoke('gerar-ficha-tecnica', {
-        body: { equipamentoId: equipamento.id },
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const response = await fetch('https://zdqwalmxqpwdtepreczv.supabase.co/functions/v1/gerar-ficha-tecnica', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ equipamentoId: equipamento.id })
       });
 
-      console.log('Resposta da função:', response);
-
-      if (response.error) {
-        console.error('Erro na resposta da função:', response.error);
-        throw response.error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao gerar PDF');
       }
 
-      // Garantir que tratamos 'data' como binário (Blob)
-      const blob = new Blob([response.data as BlobPart], { type: 'application/pdf' });
+      // 2. Garantir que tratamos 'data' como binário (Blob)
+      const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -43,7 +48,7 @@ export const DetalhesEquipamentoView: React.FC<DetalhesEquipamentoProps> = ({ eq
       
     } catch (error) {
       console.error('Erro completo ao gerar PDF:', error);
-      alert('Erro ao gerar ficha técnica. Verifique o console para detalhes técnicos.');
+      alert(`Erro ao gerar ficha técnica: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
