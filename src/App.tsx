@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { 
   LayoutDashboard, 
@@ -57,8 +58,8 @@ interface UserProfile {
 }
 
 export default function App() {
-  // Navigation & view states
-  const [currentView, setCurrentView] = useState<ActiveView>('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -68,6 +69,13 @@ export default function App() {
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+
+  // Derive current view from location
+  const currentView: ActiveView = location.pathname === '/equipamentos/componentes' 
+    ? 'componentes' 
+    : location.pathname.startsWith('/equipamentos') 
+    ? 'todos' 
+    : location.pathname.substring(1).replace('-', '_') as ActiveView || 'dashboard';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -138,8 +146,23 @@ export default function App() {
 
   // Handle sidebar navigation clicks
   const handleViewChange = (view: ActiveView, componentId: string | null = null) => {
-    setCurrentView(view);
-    setSelectedComponentId(componentId);
+    const pathMap: Record<ActiveView, string> = {
+      dashboard: '/dashboard',
+      todos: '/equipamentos',
+      componentes: '/equipamentos/componentes',
+      plano_manutencao: '/plano-manutencao',
+      ordens_manutencao: '/ordens-manutencao',
+      equipes_manutencao: '/equipes-manutencao',
+      notificacoes: '/notificacoes',
+      estoque_pecas: '/estoque-pecas',
+      compras_faturacao: '/compras-faturacao',
+      relatorios: '/relatorios',
+      configuracoes: '/configuracoes',
+      fichatecnica: '/ficha-tecnica',
+    };
+    
+    if (componentId) setSelectedComponentId(componentId);
+    navigate(pathMap[view] || '/dashboard');
     setMobileMenuOpen(false); // Close mobile menu if open
   };
 
@@ -573,18 +596,21 @@ export default function App() {
                     </div>
                   )}
 
-                  {currentView === 'dashboard' && <DashboardView />}
-                  {currentView === 'todos' && <TodosEquipamentosView onNavigateToComponent={(id) => handleViewChange('componentes', id)} />}
-                  {currentView === 'componentes' && <ComponentesView selectedComponentId={selectedComponentId} />}
-                  {currentView === 'plano_manutencao' && <PlanoManutencaoView />}
-                  {currentView === 'ordens_manutencao' && <OrdensManutencaoView />}
-                  {currentView === 'equipes_manutencao' && <EquipesManutencaoView />}
-                  {currentView === 'notificacoes' && <NotificacoesView />}
-                  {currentView === 'estoque_pecas' && <EstoquePecasView />}
-                  {currentView === 'compras_faturacao' && <ComprasFaturacaoView />}
-                  {currentView === 'relatorios' && <RelatoriosView />}
-                  {currentView === 'configuracoes' && <ConfiguracoesView />}
-                  {currentView === 'fichatecnica' && <FichaTecnicaView />}
+                  <Routes>
+                    <Route path="/dashboard" element={<DashboardView />} />
+                    <Route path="/equipamentos" element={<TodosEquipamentosView onNavigateToComponent={(id) => handleViewChange('componentes', id)} />} />
+                    <Route path="/equipamentos/componentes" element={<ComponentesView selectedComponentId={selectedComponentId} />} />
+                    <Route path="/plano-manutencao" element={<PlanoManutencaoView />} />
+                    <Route path="/ordens-manutencao" element={<OrdensManutencaoView />} />
+                    <Route path="/equipes-manutencao" element={<EquipesManutencaoView />} />
+                    <Route path="/notificacoes" element={<NotificacoesView />} />
+                    <Route path="/estoque-pecas" element={<EstoquePecasView />} />
+                    <Route path="/compras-faturacao" element={<ComprasFaturacaoView />} />
+                    <Route path="/relatorios" element={<RelatoriosView />} />
+                    <Route path="/configuracoes" element={<ConfiguracoesView />} />
+                    <Route path="/ficha-tecnica" element={<FichaTecnicaView />} />
+                    <Route path="/" element={<DashboardView />} />
+                  </Routes>
 
 
                 </motion.div>
