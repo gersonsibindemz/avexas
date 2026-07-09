@@ -24,7 +24,7 @@ export const CommitIndicator: React.FC = () => {
 
   return (
     <div className="px-4 py-1 text-[10px] text-slate-500 bg-white border-b border-sky-100">
-      Última atualização (Maputo): {info.date} | Commit: {info.message}
+      [Temporário] Última atualização: {info.date} | Update: {info.message}
     </div>
   );
 };

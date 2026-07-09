@@ -71,6 +71,8 @@ export interface OrdemManutencao {
   tempo_gasto?: string;
   custo?: number;
   observacoes?: string;
+  materiais_utilizados?: string[];
+  anexo_relatorio_url?: string;
   created_at?: string;
   // Display fields from joins
   equipamento_nome?: string;

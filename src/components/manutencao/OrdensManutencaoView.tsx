@@ -3,12 +3,18 @@ import { Plus, MoreVertical } from 'lucide-react';
 import { OrdemManutencao } from '../../types';
 import { Modal } from '../common/Modal';
 import { CadastrarOrdemView } from './CadastrarOrdemView';
+import { EditarOrdemView } from './EditarOrdemView';
 import { supabase } from '../../lib/supabaseClient';
 
 export const OrdensManutencaoView: React.FC = () => {
   const [ordens, setOrdens] = useState<OrdemManutencao[]>([]);
   const [statusOpcoes, setStatusOpcoes] = useState<{id: number, nome: string}[]>([]);
+  const [equipamentos, setEquipamentos] = useState<any[]>([]);
+  const [tipos, setTipos] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemManutencao | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -51,18 +57,40 @@ export const OrdensManutencaoView: React.FC = () => {
       });
       setOrdens(mapped);
       if (status) setStatusOpcoes(status);
+      if (equipamentos) setEquipamentos(equipamentos);
+      if (tipos) setTipos(tipos);
+      if (profiles) setProfiles(profiles);
     }
     setLoading(false);
   };
 
   const filteredOrdens = ordens.filter(ordem => 
-    ordem.equipamento_nome.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (ordem.equipamento_nome || '').toLowerCase().includes(searchQuery.toLowerCase()) &&
     (statusFilter === '' || ordem.status === statusFilter)
   );
 
   const handleSaveOrdem = (novaOrdem: OrdemManutencao) => {
-    setOrdens([...ordens, novaOrdem]);
+    const eq = equipamentos.find((e: any) => e.id === novaOrdem.equipamento_id);
+    const tipo = tipos.find((t: any) => t.id === novaOrdem.tipo_id);
+    const stat = statusOpcoes.find((s: any) => s.id === novaOrdem.status_id);
+    const prof = profiles.find((p: any) => p.id === novaOrdem.tecnico_id);
+
+    const novaOrdemMapped: OrdemManutencao = {
+      ...novaOrdem,
+      equipamento_nome: eq?.nome || '',
+      tipo: tipo?.nome || '',
+      status: stat?.nome || '',
+      tecnico: prof ? `${prof.name} ${prof.surname}`.trim() : ''
+    };
+
+    setOrdens([...ordens, novaOrdemMapped]);
     setIsModalOpen(false);
+  };
+
+  const handleUpdateOrdem = (ordemAtualizada: OrdemManutencao) => {
+    setOrdens(ordens.map(o => o.id === ordemAtualizada.id ? ordemAtualizada : o));
+    setIsEditModalOpen(false);
+    setSelectedOrdem(null);
   };
 
   return (
@@ -97,6 +125,17 @@ export const OrdensManutencaoView: React.FC = () => {
         <CadastrarOrdemView onCancel={() => setIsModalOpen(false)} onSave={handleSaveOrdem} />
       </Modal>
 
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editar Ordem de Manutenção">
+        {selectedOrdem && (
+          <EditarOrdemView 
+            ordem={selectedOrdem} 
+            statusOpcoes={statusOpcoes}
+            onCancel={() => setIsEditModalOpen(false)} 
+            onSave={handleUpdateOrdem} 
+          />
+        )}
+      </Modal>
+
       <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-6 text-center text-slate-500">Carregando...</div>
@@ -123,8 +162,11 @@ export const OrdensManutencaoView: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-slate-600">{ordem.tecnico}</td>
                   <td className="px-6 py-4">
-                    <button className="text-slate-400 hover:text-slate-600">
-                      <MoreVertical size={16} />
+                    <button 
+                      onClick={() => { setSelectedOrdem(ordem); setIsEditModalOpen(true); }}
+                      className="text-sky-600 hover:text-sky-800 font-medium"
+                    >
+                      Editar
                     </button>
                   </td>
                 </tr>
