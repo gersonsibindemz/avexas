@@ -44,8 +44,50 @@ export interface Equipamento {
   updated_by?: string;
 }
 
+export interface TipoManutencao {
+  id: number;
+  nome: string;
+}
+
+export interface PrioridadeManutencao {
+  id: number;
+  nome: string;
+}
+
+export interface StatusOrdem {
+  id: number;
+  nome: string;
+}
+
+export interface OrdemManutencao {
+  id: string;
+  equipamento_id: string;
+  tipo_id?: number;
+  prioridade_id?: number;
+  status_id?: number;
+  descricao: string;
+  data_execucao: string;
+  tecnico_id?: string;
+  tempo_gasto?: string;
+  custo?: number;
+  observacoes?: string;
+  created_at?: string;
+  // Display fields from joins
+  equipamento_nome?: string;
+  tipo?: string;
+  status?: string;
+  tecnico?: string;
+}
+
 export interface AdvancedFilters {
   sort: 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc';
   locations: string[];
   status: string[];
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  surname: string;
+  role: string;
 }
