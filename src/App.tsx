@@ -46,6 +46,7 @@ import { ComprasFaturacaoView } from './components/compras/ComprasFaturacaoView'
 import { RelatoriosView } from './components/relatorios/RelatoriosView';
 import { ConfiguracoesView } from './components/configuracoes/ConfiguracoesView';
 import { FichaTecnicaView } from './components/relatorios/FichaTecnicaView';
+import { CommitIndicator } from './components/temp/CommitIndicator';
 import { supabase } from './lib/supabaseClient';
 
 // Type definitions for views
@@ -564,6 +565,7 @@ export default function App() {
           className="flex-1 flex flex-col md:pl-64 min-h-0 w-full transition-all duration-300"
         >
           <div className="flex-1 w-full p-2 md:p-4">
+            <CommitIndicator />
             
             {/* VIEW CONTENT TRANSITION FRAMEWORK */}
             <div className="flex-1 flex flex-col">
