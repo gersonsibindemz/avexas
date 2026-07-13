@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { 
@@ -68,6 +68,7 @@ export default function App() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [equipamentosOpen, setEquipamentosOpen] = useState<boolean>(false);
+  const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -117,32 +118,38 @@ export default function App() {
   // Helper for human-readable titles
   const getSectionTitle = (view: ActiveView): string => {
     switch (view) {
-      case 'dashboard':
-        return 'Dashboard';
-      case 'todos':
-        return 'Equipamentos > Todos';
-      case 'componentes':
-        return 'Equipamentos > Componentes';
-      case 'plano_manutencao':
-        return 'Plano de Manutenção';
-      case 'ordens_manutencao':
-        return 'Ordens de Manutenção';
-      case 'equipes_manutencao':
-        return 'Equipes de Manutenção';
-      case 'notificacoes':
-        return 'Notificações';
-      case 'estoque_pecas':
-        return 'Estoque de Peças';
-      case 'compras_faturacao':
-        return 'Compras & Faturação';
-      case 'relatorios':
-        return 'Relatórios';
-      case 'configuracoes':
-        return 'Configurações';
-      case 'fichatecnica':
-        return 'Ficha Técnica';
-      default:
-        return 'Dashboard';
+      case 'dashboard': return 'Dashboard';
+      case 'todos': return 'Equipamentos > Todos';
+      case 'componentes': return 'Equipamentos > Componentes';
+      case 'plano_manutencao': return 'Manutenção > Planos';
+      case 'ordens_manutencao': return 'Manutenção > Ordens';
+      case 'equipes_manutencao': return 'Manutenção > Equipes';
+      case 'notificacoes': return 'Notificações';
+      case 'estoque_pecas': return 'Estoque de Peças';
+      case 'compras_faturacao': return 'Compras & Faturação';
+      case 'relatorios': return 'Relatórios';
+      case 'configuracoes': return 'Configurações';
+      case 'fichatecnica': return 'Ficha Técnica';
+      default: return 'Dashboard';
+    }
+  };
+
+  // Helper for human-readable breadcrumbs
+  const getBreadcrumbItems = (view: ActiveView): { label: string, view?: ActiveView }[] => {
+    switch (view) {
+      case 'dashboard': return [{ label: 'Dashboard' }];
+      case 'todos': return [{ label: 'Equipamentos', view: 'todos' }, { label: 'Todos' }];
+      case 'componentes': return [{ label: 'Equipamentos', view: 'todos' }, { label: 'Componentes' }];
+      case 'plano_manutencao': return [{ label: 'Manutenção', view: 'plano_manutencao' }, { label: 'Planos' }];
+      case 'ordens_manutencao': return [{ label: 'Manutenção', view: 'ordens_manutencao' }, { label: 'Ordens' }];
+      case 'equipes_manutencao': return [{ label: 'Manutenção', view: 'equipes_manutencao' }, { label: 'Equipes' }];
+      case 'notificacoes': return [{ label: 'Notificações' }];
+      case 'estoque_pecas': return [{ label: 'Estoque', view: 'estoque_pecas' }, { label: 'Peças' }];
+      case 'compras_faturacao': return [{ label: 'Compras & Faturação' }];
+      case 'relatorios': return [{ label: 'Relatórios' }];
+      case 'configuracoes': return [{ label: 'Configurações' }];
+      case 'fichatecnica': return [{ label: 'Relatórios', view: 'relatorios' }, { label: 'Ficha Técnica' }];
+      default: return [{ label: getSectionTitle(view) }];
     }
   };
 
@@ -352,11 +359,78 @@ export default function App() {
               </AnimatePresence>
             </div>
             
-            {/* New Modules */}
+            {/* Manutenção Navigation Block */}
+            <div className="space-y-1 pt-2">
+              <div 
+                id="nav-manutencao-group"
+                className={`flex items-center rounded-none text-sm font-sans font-medium transition-all duration-150 ${
+                  currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao'
+                    ? 'bg-sky-600/15 border border-sky-500/30 text-sky-300'
+                    : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
+                }`}
+              >
+                <button
+                  id="nav-manutencao-text-desktop"
+                  onClick={() => setManutencaoOpen(!manutencaoOpen)}
+                  className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
+                >
+                  <Wrench size={18} className={currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao' ? 'text-sky-300' : 'text-slate-400'} />
+                  <span>Manutenção</span>
+                </button>
+                <button
+                  id="nav-manutencao-arrow-desktop"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setManutencaoOpen(!manutencaoOpen);
+                  }}
+                  className={`p-2.5 hover:bg-slate-800/80 rounded-none transition-transform duration-200 ${
+                    manutencaoOpen ? 'rotate-180 text-sky-400' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                  title="Expandir subsetores"
+                  aria-label="Toggle submenu"
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+
+              {/* Sub-menu hierarchical representation */}
+              <AnimatePresence initial={false}>
+                {manutencaoOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden pl-7 pr-1 space-y-1 border-l border-slate-800 ml-5"
+                  >
+                    {[
+                      { id: 'plano_manutencao', title: 'Planos', icon: Calendar },
+                      { id: 'ordens_manutencao', title: 'Ordens', icon: ClipboardList },
+                      { id: 'equipes_manutencao', title: 'Equipes', icon: Users },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleViewChange(item.id as ActiveView)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-inter transition-all duration-150 ${
+                          currentView === item.id
+                            ? 'bg-sky-950 text-sky-300 font-bold border-l-2 border-sky-400 pl-2'
+                            : 'hover:bg-slate-800/40 text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <item.icon size={14} className={currentView === item.id ? 'text-sky-400' : 'text-slate-500'} />
+                          <span>{item.title}</span>
+                        </div>
+                        <ArrowRight size={10} className={`text-sky-400 transition-transform ${currentView === item.id ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0'}`} />
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            {/* Other Modules */}
             {[
-              { id: 'plano_manutencao', title: 'Plano de Manutenção', icon: Calendar },
-              { id: 'ordens_manutencao', title: 'Ordens de Manutenção', icon: ClipboardList },
-              { id: 'equipes_manutencao', title: 'Equipes de Manutenção', icon: Users },
               { id: 'notificacoes', title: 'Notificações', icon: Bell },
               { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
               { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
@@ -515,11 +589,74 @@ export default function App() {
                     </AnimatePresence>
                   </div>
                   
-                  {/* New Modules Mobile */}
+                  {/* Manutenção Navigation Block */}
+                  <div className="space-y-1 pt-2">
+                    <div 
+                      id="nav-manutencao-group-mobile"
+                      className={`flex items-center rounded-lg text-sm font-sans font-medium transition-all ${
+                        currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao'
+                          ? 'bg-sky-600/15 border border-sky-500/30 text-sky-300'
+                          : 'text-slate-400 hover:bg-slate-800/40'
+                      }`}
+                    >
+                      <button
+                        id="nav-manutencao-text-mobile"
+                        onClick={() => setManutencaoOpen(!manutencaoOpen)}
+                        className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
+                      >
+                        <Wrench size={18} />
+                        <span>Manutenção</span>
+                      </button>
+                      <button
+                        id="nav-manutencao-arrow-mobile"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManutencaoOpen(!manutencaoOpen);
+                        }}
+                        className={`p-3 hover:bg-slate-800/80 rounded-r-lg transition-transform duration-200 ${
+                          manutencaoOpen ? 'rotate-180 text-sky-400' : 'text-slate-500'
+                        }`}
+                        aria-label="Toggle submenu"
+                      >
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+
+                    {/* Submenu for Manutenção */}
+                    <AnimatePresence initial={false}>
+                      {manutencaoOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="overflow-hidden pl-7 pr-1 space-y-1 border-l border-slate-800 ml-5"
+                        >
+                          {[
+                            { id: 'plano_manutencao', title: 'Planos', icon: Calendar },
+                            { id: 'ordens_manutencao', title: 'Ordens', icon: ClipboardList },
+                            { id: 'equipes_manutencao', title: 'Equipes', icon: Users },
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleViewChange(item.id as ActiveView)}
+                              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-xs font-inter transition-all ${
+                                currentView === item.id
+                                  ? 'bg-sky-950 text-sky-300 font-bold border-l-2 border-sky-400 pl-2'
+                                  : 'hover:bg-slate-800/40 text-slate-500 hover:text-slate-300'
+                              }`}
+                            >
+                              <item.icon size={14} />
+                              <span>{item.title}</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  
+                  {/* Other Modules Mobile */}
                   {[
-                    { id: 'plano_manutencao', title: 'Plano de Manutenção', icon: Calendar },
-                    { id: 'ordens_manutencao', title: 'Ordens de Manutenção', icon: ClipboardList },
-                    { id: 'equipes_manutencao', title: 'Equipes de Manutenção', icon: Users },
                     { id: 'notificacoes', title: 'Notificações', icon: Bell },
                     { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
                     { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
@@ -566,6 +703,22 @@ export default function App() {
         >
           <div className="flex-1 w-full p-2 md:p-4">
             <CommitIndicator />
+            {currentView !== 'dashboard' && (
+              <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2">
+                <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors">Avexas</button>
+                {getBreadcrumbItems(currentView).map((item, index) => (
+                  <Fragment key={index}>
+                    <span>/</span>
+                    <button 
+                      onClick={() => item.view ? handleViewChange(item.view) : undefined} 
+                      className={`${index === getBreadcrumbItems(currentView).length - 1 ? 'font-semibold text-slate-600' : 'hover:text-sky-600'} cursor-pointer transition-colors`}
+                    >
+                      {item.label}
+                    </button>
+                  </Fragment>
+                ))}
+              </div>
+            )}
             
             {/* VIEW CONTENT TRANSITION FRAMEWORK */}
             <div className="flex-1 flex flex-col">
@@ -581,21 +734,6 @@ export default function App() {
                 >
                   
 
-                  {/* Breadcrumb - Subtle and active */}
-                  {currentView !== 'dashboard' && (
-                    <div className="absolute top-4 left-6 z-20 flex items-center gap-1.5 text-[10px] font-inter text-slate-400">
-                      <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors">Avexas</button>
-                      <span>/</span>
-                      <button onClick={() => handleViewChange('todos')} className="hover:text-sky-600 cursor-pointer transition-colors">Equipamentos</button>
-                      <span>/</span>
-                      <button 
-                        onClick={() => handleViewChange(currentView === 'todos' ? 'todos' : 'componentes')} 
-                        className="font-semibold text-slate-600 hover:text-sky-600 cursor-pointer transition-colors"
-                      >
-                        {currentView === 'todos' ? 'Todos' : 'Componentes'}
-                      </button>
-                    </div>
-                  )}
 
                   <Routes>
                     <Route path="/dashboard" element={<DashboardView />} />

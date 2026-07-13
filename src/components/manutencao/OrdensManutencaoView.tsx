@@ -12,7 +12,7 @@ export const OrdensManutencaoView: React.FC = () => {
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [tipos, setTipos] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemManutencao | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,7 @@ export const OrdensManutencaoView: React.FC = () => {
     };
 
     setOrdens([...ordens, novaOrdemMapped]);
-    setIsModalOpen(false);
+    setIsRegistering(false);
   };
 
   const handleUpdateOrdem = (ordemAtualizada: OrdemManutencao) => {
@@ -93,11 +93,21 @@ export const OrdensManutencaoView: React.FC = () => {
     setSelectedOrdem(null);
   };
 
+  if (isRegistering) {
+    return (
+      <div className="flex-1 p-6">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-full mx-auto border border-slate-200">
+          <CadastrarOrdemView onCancel={() => setIsRegistering(false)} onSave={handleSaveOrdem} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-slate-800">Ordens de Manutenção</h1>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+        <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
           <Plus size={16} />
           Nova Ordem
         </button>
@@ -120,10 +130,6 @@ export const OrdensManutencaoView: React.FC = () => {
           {statusOpcoes.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
         </select>
       </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nova Ordem de Manutenção">
-        <CadastrarOrdemView onCancel={() => setIsModalOpen(false)} onSave={handleSaveOrdem} />
-      </Modal>
 
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editar Ordem de Manutenção">
         {selectedOrdem && (
