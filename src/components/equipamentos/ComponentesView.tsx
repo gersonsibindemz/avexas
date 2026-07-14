@@ -22,6 +22,7 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
   const [editingComponente, setEditingComponente] = useState<Componente | null>(null);
   const [selectedComponente, setSelectedComponente] = useState<{comp: Componente, eqNome: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filteredComponentes, setFilteredComponentes] = useState<FlatComponente[] | null>(null);
@@ -114,10 +115,12 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
         return;
     }
 
+    setLoading(true);
     const { data, error } = await supabase
       .from('componentes')
       .select('*, equipamentos(nome)')
       .or(`nome.ilike.%${searchQuery}%,codigo.ilike.%${searchQuery}%`);
+    setLoading(false);
 
     if (error) {
         console.error('Error searching componentes:', error);
@@ -260,8 +263,12 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
                   </div>
               )}
             </div>
-            <button onClick={handleSearch} className="flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 hover:bg-slate-100">
-              <Search size={16} />
+            <button 
+                onClick={handleSearch} 
+                disabled={loading}
+                className={`flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 ${loading ? 'opacity-50' : 'hover:bg-slate-100'}`}
+            >
+              {loading ? <div className="animate-spin h-4 w-4 border-2 border-slate-600 border-t-transparent rounded-full" /> : <Search size={16} />}
             </button>
         </div>
         <div className="flex justify-end">

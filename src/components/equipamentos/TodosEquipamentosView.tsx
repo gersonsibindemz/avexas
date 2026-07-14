@@ -81,7 +81,7 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
     const { data, error } = await supabase
       .from('equipamentos')
       .select('*, componentes (*)')
-      .or(`nome.ilike.%${searchQuery}%,codigo.ilike.%${searchQuery}%,componentes.nome.ilike.%${searchQuery}%,componentes.codigo.ilike.%${searchQuery}%`);
+      .or(`nome.ilike.%${searchQuery}%,codigo.ilike.%${searchQuery}%`);
 
     if (error) {
         console.error('Error searching equipamentos:', error);
@@ -258,8 +258,12 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
                   </div>
               )}
             </div>
-            <button onClick={handleSearch} className="flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 hover:bg-slate-100">
-              <Search size={16} />
+            <button 
+                onClick={handleSearch} 
+                disabled={loading}
+                className={`flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 ${loading ? 'opacity-50' : 'hover:bg-slate-100'}`}
+            >
+              {loading ? <div className="animate-spin h-4 w-4 border-2 border-slate-600 border-t-transparent rounded-full" /> : <Search size={16} />}
             </button>
         </div>
         <div className="flex justify-end">

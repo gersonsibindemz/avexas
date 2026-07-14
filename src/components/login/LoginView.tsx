@@ -8,15 +8,18 @@ interface LoginViewProps {
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    setLoading(false);
 
     if (error) {
       setError(error.message);
@@ -54,9 +57,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           />
           <button
             type="submit"
-            className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold transition-colors"
+            disabled={loading}
+            className={`w-full py-3 ${loading ? 'bg-sky-800' : 'bg-sky-600 hover:bg-sky-700'} text-white font-bold transition-colors`}
           >
-            Iniciar Sessão
+            {loading ? 'Entrando...' : 'Iniciar Sessão'}
           </button>
         </form>
       </div>

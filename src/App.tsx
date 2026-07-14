@@ -30,7 +30,11 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Activity
+  Activity,
+  Cog,
+  X,
+  PanelLeftOpen,
+  PanelLeftClose
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
@@ -67,6 +71,7 @@ export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isMobileWarningOpen, setIsMobileWarningOpen] = useState(false);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [equipamentosOpen, setEquipamentosOpen] = useState<boolean>(false);
   const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
@@ -85,6 +90,9 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
+        if (window.innerWidth < 768) {
+            setIsMobileWarningOpen(true);
+        }
         if (location.pathname === '/') {
           navigate('/dashboard');
         }
@@ -204,7 +212,7 @@ export default function App() {
                   className="md:hidden p-2 rounded-lg hover:bg-sky-50 text-sky-900 transition-colors focus:outline-none"
                   aria-label="Abrir menu"
                 >
-                  <Menu size={20} />
+                  <PanelLeftOpen size={20} />
                 </button>
                 
                 {/* Page Title */}
@@ -301,7 +309,7 @@ export default function App() {
                   onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                   className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
                 >
-                  <Wrench size={18} className={currentView === 'todos' || currentView === 'componentes' ? 'text-sky-300' : 'text-slate-400'} />
+                  <Cog size={18} className={currentView === 'todos' || currentView === 'componentes' ? 'text-sky-300' : 'text-slate-400'} />
                   <span>Equipamentos</span>
                 </button>
                 <button
@@ -380,7 +388,7 @@ export default function App() {
                   onClick={() => setManutencaoOpen(!manutencaoOpen)}
                   className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
                 >
-                  <Activity size={18} className={currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao' ? 'text-sky-300' : 'text-slate-400'} />
+                  <Wrench size={18} className={currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao' ? 'text-sky-300' : 'text-slate-400'} />
                   <span>Manutenção</span>
                 </button>
                 <button
@@ -486,13 +494,13 @@ export default function App() {
               >
                 {/* Mobile Drawer Header */}
                 <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center">
-                      <Layers className="text-slate-950" size={18} />
-                    </div>
-                    <span className="font-sans font-black text-lg tracking-wider text-white">
-                      Avexas
-                    </span>
+                  <div className="flex items-center px-2">
+                    <img 
+                      src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" 
+                      alt="Avexas Logo" 
+                      className="h-10 w-auto pointer-events-none select-none" 
+                      draggable="false"
+                    />
                   </div>
                   <button 
                     id="close-mobile-menu"
@@ -500,7 +508,7 @@ export default function App() {
                     className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
                     aria-label="Fechar menu"
                   >
-                    <X size={18} />
+                    <PanelLeftClose size={18} />
                   </button>
                 </div>
 
@@ -538,7 +546,7 @@ export default function App() {
                         onClick={() => setEquipamentosOpen(!equipamentosOpen)}
                         className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
                       >
-                        <Wrench size={18} />
+                        <Cog size={18} />
                         <span>Equipamentos</span>
                       </button>
                       <button
@@ -610,7 +618,7 @@ export default function App() {
                         onClick={() => setManutencaoOpen(!manutencaoOpen)}
                         className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
                       >
-                        <Activity size={18} />
+                        <Wrench size={18} />
                         <span>Manutenção</span>
                       </button>
                       <button
@@ -688,7 +696,7 @@ export default function App() {
                 </nav>
 
                 {/* Mobile sidebar footer */}
-                <div className="p-4 border-t border-slate-800 bg-slate-950/40 text-slate-500 text-xs font-inter flex flex-col gap-1">
+                <div className="hidden md:flex p-4 border-t border-slate-800 bg-slate-950/40 text-slate-500 text-xs font-inter flex-col gap-1">
                   <div className="flex items-center gap-1.5 text-slate-400 font-bold">
                     <Laptop size={12} className="text-sky-500" />
                   </div>
@@ -775,6 +783,24 @@ export default function App() {
               <div className="flex gap-4 justify-center">
                 <button onClick={() => setIsLogoutConfirmOpen(false)} className="px-6 py-2 text-sm bg-sky-600 text-white hover:bg-sky-700 rounded-none">Não</button>
                 <button onClick={handleLogout} className="px-6 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-none">Sim</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MOBILE WARNING MODAL */}
+        {isMobileWarningOpen && (
+          <div className="fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
+            <div className="bg-white p-6 shadow-2xl w-full max-w-sm text-center relative">
+              <button
+                onClick={() => setIsMobileWarningOpen(false)}
+                className="absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+              <p className="text-slate-800 font-medium mb-6 mt-4">Este sistema não está otimizado para dispositivos móveis. Para uma melhor experiência, utilize um computador.</p>
+              <div className="flex gap-4 justify-center">
+                <button onClick={() => setIsMobileWarningOpen(false)} className="px-6 py-2 text-sm bg-sky-600 text-white hover:bg-sky-700 rounded-none">Continuar mesmo assim</button>
               </div>
             </div>
           </div>
