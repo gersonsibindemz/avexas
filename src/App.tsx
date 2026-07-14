@@ -84,6 +84,9 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
+        if (location.pathname === '/') {
+          navigate('/dashboard');
+        }
         supabase.from('profiles').select('name, surname, role').eq('id', session.user.id).single().then(({ data, error }) => {
           if (error) console.error('Error fetching profile:', error);
           else if (data) setUser(data as UserProfile);
@@ -103,16 +106,18 @@ export default function App() {
       } else {
         setIsLoggedIn(false);
         setUser(null);
+        navigate('/login');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [location.pathname, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsLogoutConfirmOpen(false);
     setIsUserDropdownOpen(false);
+    navigate('/login');
   };
 
   // Helper for human-readable titles
@@ -179,7 +184,7 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors />
       {!isLoggedIn ? (
-        <LoginView onLogin={() => {}} />
+        <LoginView onLogin={() => navigate('/dashboard')} />
       ) : (
         <div className="min-h-screen bg-slate-50 font-sans flex flex-col antialiased selection:bg-sky-500 selection:text-white">
           {/* BACKGROUND DECORATIONS (Subtle blue ambient orbs) */}
