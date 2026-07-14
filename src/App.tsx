@@ -29,7 +29,8 @@ import {
   ShoppingCart,
   BarChart3,
   Settings,
-  FileText
+  FileText,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
@@ -379,7 +380,7 @@ export default function App() {
                   onClick={() => setManutencaoOpen(!manutencaoOpen)}
                   className="flex-1 flex items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none"
                 >
-                  <Wrench size={18} className={currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao' ? 'text-sky-300' : 'text-slate-400'} />
+                  <Activity size={18} className={currentView === 'plano_manutencao' || currentView === 'ordens_manutencao' || currentView === 'equipes_manutencao' ? 'text-sky-300' : 'text-slate-400'} />
                   <span>Manutenção</span>
                 </button>
                 <button
@@ -609,7 +610,7 @@ export default function App() {
                         onClick={() => setManutencaoOpen(!manutencaoOpen)}
                         className="flex-1 flex items-center gap-3 px-3 py-3 text-left focus:outline-none"
                       >
-                        <Wrench size={18} />
+                        <Activity size={18} />
                         <span>Manutenção</span>
                       </button>
                       <button

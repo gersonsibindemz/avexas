@@ -25,17 +25,6 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Local state for materials
-  const [materiaisSelecionados, setMateriaisSelecionados] = useState<{nome: string, quantidade: number}[]>([]);
-  const [novoMaterial, setNovoMaterial] = useState('');
-  const [novaQuantidade, setNovaQuantidade] = useState(0);
-
-  const addMaterialLocal = () => {
-    if (!novoMaterial || novaQuantidade <= 0) return;
-    setMateriaisSelecionados([...materiaisSelecionados, { nome: novoMaterial, quantidade: novaQuantidade }]);
-    setNovoMaterial('');
-    setNovaQuantidade(0);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,31 +145,6 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
             ))}
           </select>
         </div>
-      </div>
-      
-      <div className="border-t pt-4 mt-4">
-        <label className="block text-sm font-medium text-slate-700">Materiais Utilizados (Local)</label>
-        <div className="flex gap-2 mt-2">
-            <input type="text" placeholder="Nome do material" value={novoMaterial} onChange={(e) => setNovoMaterial(e.target.value)} className="border border-slate-300 p-2 text-sm flex-1" />
-            <input type="number" placeholder="Qtd" value={novaQuantidade} onChange={(e) => setNovaQuantidade(Number(e.target.value))} className="border border-slate-300 p-2 text-sm w-20" />
-            <button type="button" onClick={addMaterialLocal} className="bg-sky-600 text-white px-4 py-2 text-sm hover:bg-sky-700">Add</button>
-        </div>
-        <table className="mt-4 w-full text-sm text-left text-slate-600">
-            <thead>
-                <tr>
-                    <th className="font-medium p-2">Material</th>
-                    <th className="font-medium p-2">Quantidade</th>
-                </tr>
-            </thead>
-            <tbody>
-                {materiaisSelecionados.map((m, i) => (
-                    <tr key={i} className="border-b">
-                        <td className="p-2">{m.nome}</td>
-                        <td className="p-2">{m.quantidade}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
       </div>
       
       <div className="flex justify-end gap-4 items-center mt-6">
