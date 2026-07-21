@@ -276,7 +276,7 @@ export default function App() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto sidebar-scrollbar">
             
             {/* Dashboard Navigation */}
             <button
@@ -513,7 +513,7 @@ export default function App() {
                 </div>
 
                 {/* Navigation content */}
-                <nav className="flex-1 py-4 px-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 py-4 px-4 space-y-1 overflow-y-auto sidebar-scrollbar">
                   
                   {/* Dashboard link */}
                   <button

@@ -81,6 +81,17 @@ export interface OrdemManutencao {
   tecnico?: string;
 }
 
+export interface PlanoManutencao {
+  id: string;
+  ordem_id: string;
+  descricao: string;
+  data_inicio: string;
+  data_fim: string;
+  status: 'planejado' | 'em_execucao' | 'concluido' | 'cancelado';
+  // Display fields
+  ordem_descricao?: string;
+}
+
 export interface AdvancedFilters {
   sort: 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc';
   locations: string[];

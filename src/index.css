@@ -11,3 +11,17 @@
   user-select: none;
   pointer-events: none;
 }
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #0284c7;
+  border-radius: 2px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0369a1;
+}

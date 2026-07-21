@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, MoreVertical } from 'lucide-react';
 import { OrdemManutencao } from '../../types';
-import { Modal } from '../common/Modal';
+import { FormCard } from '../common/FormCard';
 import { CadastrarOrdemView } from './CadastrarOrdemView';
 import { EditarOrdemView } from './EditarOrdemView';
 import { supabase } from '../../lib/supabaseClient';
@@ -131,16 +131,18 @@ export const OrdensManutencaoView: React.FC = () => {
         </select>
       </div>
 
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editar Ordem de Manutenção">
-        {selectedOrdem && (
-          <EditarOrdemView 
-            ordem={selectedOrdem} 
-            statusOpcoes={statusOpcoes}
-            onCancel={() => setIsEditModalOpen(false)} 
-            onSave={handleUpdateOrdem} 
-          />
-        )}
-      </Modal>
+      {isEditModalOpen && (
+        <FormCard title="Editar Ordem de Manutenção" onClose={() => setIsEditModalOpen(false)}>
+          {selectedOrdem && (
+            <EditarOrdemView 
+              ordem={selectedOrdem} 
+              statusOpcoes={statusOpcoes}
+              onCancel={() => setIsEditModalOpen(false)} 
+              onSave={handleUpdateOrdem} 
+            />
+          )}
+        </FormCard>
+      )}
 
       <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
