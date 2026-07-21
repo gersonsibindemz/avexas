@@ -90,6 +90,7 @@ export interface PlanoManutencao {
   status: 'planejado' | 'em_execucao' | 'concluido' | 'cancelado';
   // Display fields
   ordem_descricao?: string;
+  titulo?: string;
 }
 
 export interface AdvancedFilters {
