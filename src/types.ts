@@ -107,3 +107,14 @@ export interface Profile {
   especialidade?: string | null;
   contacto?: string | null;
 }
+
+export interface Peca {
+  id: string;
+  codigo: string;
+  descricao: string;
+  unidade: string;
+  preco: number;
+  fornecedor: string;
+  estoque: number;
+  reorder_point: number;
+}
