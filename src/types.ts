@@ -118,3 +118,13 @@ export interface Peca {
   estoque: number;
   reorder_point: number;
 }
+
+export interface OrdemPeca {
+  id: string;
+  ordem_id: string;
+  peca_id: string;
+  quantidade: number;
+  // Join fields
+  peca_codigo?: string;
+  peca_descricao?: string;
+}

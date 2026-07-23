@@ -246,7 +246,14 @@ export default function App() {
               
               {/* Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-32 bg-white border border-slate-200 shadow-lg rounded-none py-1 z-50">
+                <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-slate-200 shadow-lg rounded-none py-1 z-50">
+                    <button 
+                      onClick={() => { handleViewChange('configuracoes'); setIsUserDropdownOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <Settings size={14} />
+                      Configurações
+                    </button>
                     <button 
                       onClick={() => { setIsLogoutConfirmOpen(true); setIsUserDropdownOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
@@ -449,7 +456,6 @@ export default function App() {
               { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
               { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
               { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
-              { id: 'configuracoes', title: 'Configurações', icon: Settings },
             ].map((item) => (
               <button
                 key={item.id}
@@ -675,7 +681,6 @@ export default function App() {
                     { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
                     { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
                     { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
-                    { id: 'configuracoes', title: 'Configurações', icon: Settings },
                   ].map((item) => (
                     <button
                       key={item.id}

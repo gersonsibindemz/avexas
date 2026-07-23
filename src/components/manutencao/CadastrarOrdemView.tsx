@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { OrdemManutencao, TipoManutencao, PrioridadeManutencao, StatusOrdem, Equipamento, Profile } from '../../types';
+import { OrdemManutencao, TipoManutencao, PrioridadeManutencao, StatusOrdem, Equipamento, Profile, Peca } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 
 interface CadastrarOrdemProps {
@@ -14,6 +14,8 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
   const [tipos, setTipos] = useState<TipoManutencao[]>([]);
   const [prioridades, setPrioridades] = useState<PrioridadeManutencao[]>([]);
   const [statusOpcoes, setStatusOpcoes] = useState<StatusOrdem[]>([]);
+  const [pecas, setPecas] = useState<Peca[]>([]);
+  const [pecasSelecionadas, setPecasSelecionadas] = useState<{ pecaId: string, quantidade: number }[]>([]);
   
   const [equipamentoId, setEquipamentoId] = useState('');
   const [tipoId, setTipoId] = useState<number>();
@@ -28,12 +30,13 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
 
   useEffect(() => {
     const fetchData = async () => {
-      const [equipamentosRes, tecnicosRes, tiposRes, prioridadesRes, statusRes] = await Promise.all([
+      const [equipamentosRes, tecnicosRes, tiposRes, prioridadesRes, statusRes, pecasRes] = await Promise.all([
         supabase.from('equipamentos').select('id, nome'),
         supabase.from('profiles').select('id, name, surname, role'),
         supabase.from('tipos_manutencao').select('*'),
         supabase.from('prioridades_manutencao').select('*'),
-        supabase.from('status_ordem').select('*')
+        supabase.from('status_ordem').select('*'),
+        supabase.from('pecas').select('id, codigo, descricao, estoque')
       ]);
 
       if (equipamentosRes.data) setEquipamentos(equipamentosRes.data);
@@ -50,6 +53,7 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
       if (statusRes.data) {
         setStatusOpcoes(statusRes.data);
       }
+      if (pecasRes.data) setPecas(pecasRes.data);
     };
     fetchData();
   }, []);
@@ -81,6 +85,22 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
       setError('Erro ao salvar ordem: ' + insertError.message);
       setLoading(false);
       return;
+    }
+
+    if (pecasSelecionadas.length > 0) {
+      const { error: pecasError } = await supabase
+        .from('ordem_pecas')
+        .insert(pecasSelecionadas.map(p => ({
+          ordem_id: novaOrdem.id,
+          peca_id: p.pecaId,
+          quantidade: p.quantidade
+        })));
+      
+      if (pecasError) {
+        setError('Erro ao salvar peças: ' + pecasError.message);
+        setLoading(false);
+        return;
+      }
     }
 
     onSave(novaOrdem);
@@ -144,6 +164,28 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
               <option key={t.id} value={t.id}>{`${t.name} ${t.surname}`}</option>
             ))}
           </select>
+        </div>
+        <div className="col-span-2 border-t pt-4 mt-4">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Peças</label>
+          {pecasSelecionadas.map((ps, index) => (
+            <div key={index} className="flex gap-2 mb-2 items-center">
+              <select value={ps.pecaId} onChange={e => {
+                  const newPecas = [...pecasSelecionadas];
+                  newPecas[index].pecaId = e.target.value;
+                  setPecasSelecionadas(newPecas);
+              }} className="border border-slate-300 p-2 text-sm flex-1">
+                <option value="">Selecione uma peça</option>
+                {pecas.map(p => <option key={p.id} value={p.id}>{p.codigo} - {p.descricao} (Estoque: {p.estoque})</option>)}
+              </select>
+              <input type="number" min="1" value={ps.quantidade} onChange={e => {
+                  const newPecas = [...pecasSelecionadas];
+                  newPecas[index].quantidade = parseInt(e.target.value);
+                  setPecasSelecionadas(newPecas);
+              }} className="border border-slate-300 p-2 text-sm w-20" placeholder="Qtd" />
+              <button onClick={() => setPecasSelecionadas(pecasSelecionadas.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700">Remover</button>
+            </div>
+          ))}
+          <button onClick={() => setPecasSelecionadas([...pecasSelecionadas, { pecaId: '', quantidade: 1 }])} className="text-sky-600 hover:text-sky-800 text-sm font-medium mt-2">+ Adicionar Peça</button>
         </div>
       </div>
       
