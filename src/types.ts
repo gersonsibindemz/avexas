@@ -104,4 +104,6 @@ export interface Profile {
   name: string;
   surname: string;
   role: string;
+  especialidade?: string | null;
+  contacto?: string | null;
 }
