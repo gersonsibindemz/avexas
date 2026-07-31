@@ -12,6 +12,7 @@ export const PlanoManutencaoView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchPlanos();
@@ -55,6 +56,12 @@ export const PlanoManutencaoView: React.FC = () => {
     }
   };
 
+  const filteredPlanos = planos.filter(plano => 
+      plano.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      plano.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      plano.ordem_descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="flex-1 p-6 space-y-6">
       {isRegistering ? (
@@ -66,6 +73,13 @@ export const PlanoManutencaoView: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-slate-800">Planos de Manutenção</h2>
             <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border border-slate-300 px-4 py-2 text-sm"
+                />
                 <button 
                   onClick={() => setViewMode(viewMode === 'table' ? 'calendar' : 'table')} 
                   className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 hover:bg-slate-50"
@@ -93,7 +107,7 @@ export const PlanoManutencaoView: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {planos.map(plano => (
+                        {filteredPlanos.map(plano => (
                             <tr key={plano.id} className="border-b border-slate-100">
                                 <td className="p-3">{plano.titulo || 'N/A'}</td>
                                 <td className="p-3">{plano.ordem_descricao || 'N/A'}</td>
@@ -115,7 +129,7 @@ export const PlanoManutencaoView: React.FC = () => {
                 </table>
             </div>
           ) : (
-            <CalendarioPlanoView planos={planos} />
+            <CalendarioPlanoView planos={filteredPlanos} />
           )}
         </>
       )}

@@ -107,28 +107,27 @@ export const OrdensManutencaoView: React.FC = () => {
     <div className="flex-1 flex flex-col p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-slate-800">Ordens de Manutenção</h1>
-        <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-          <Plus size={16} />
-          Nova Ordem
-        </button>
-      </div>
-
-      <div className="flex gap-4">
-        <input 
-          type="text" 
-          placeholder="Pesquisar por equipamento..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border border-slate-300 p-2 text-sm w-64"
-        />
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-slate-300 p-2 text-sm w-48"
-        >
-          <option value="">Todos os Status</option>
-          {statusOpcoes.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
-        </select>
+        <div className="flex gap-4 items-center">
+          <input 
+            type="text" 
+            placeholder="Pesquisar por equipamento..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border border-slate-300 p-2 text-sm w-64"
+          />
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-slate-300 p-2 text-sm w-48"
+          >
+            <option value="">Todos os Status</option>
+            {statusOpcoes.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
+          </select>
+          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+            <Plus size={16} />
+            Nova Ordem
+          </button>
+        </div>
       </div>
 
       {isEditModalOpen && (

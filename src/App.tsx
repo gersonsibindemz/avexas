@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, Fragment } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { 
   LayoutDashboard, 
@@ -12,13 +12,9 @@ import {
   Cpu, 
   ChevronDown,
   User, 
-  Menu, 
   X, 
   Bell, 
-  HelpCircle,
-  Sliders,
   Laptop,
-  Smartphone,
   Layers,
   ArrowRight,
   Trash2,
@@ -29,15 +25,13 @@ import {
   ShoppingCart,
   BarChart3,
   Settings,
-  FileText,
-  Activity,
   Cog,
-  X,
   PanelLeftOpen,
   PanelLeftClose
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
+import { CadastrarseView } from './components/login/CadastrarseView';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { TodosEquipamentosView } from './components/equipamentos/TodosEquipamentosView';
 import { DetalhesEquipamentoPage } from './components/equipamentos/DetalhesEquipamentoPage';
@@ -50,9 +44,13 @@ import { EstoquePecasView } from './components/estoque/EstoquePecasView';
 import { ComprasFaturacaoView } from './components/compras/ComprasFaturacaoView';
 import { RelatoriosView } from './components/relatorios/RelatoriosView';
 import { ConfiguracoesView } from './components/configuracoes/ConfiguracoesView';
+import { NotificationPanel } from './components/notificacoes/NotificationPanel';
 import { FichaTecnicaView } from './components/relatorios/FichaTecnicaView';
 import { CommitIndicator } from './components/temp/CommitIndicator';
 import { supabase } from './lib/supabaseClient';
+import { OnlineUsers } from './components/common/OnlineUsers';
+import { DashboardSkeleton } from './components/common/DashboardSkeleton';
+import { LoadingLogs } from './components/common/LoadingLogs';
 
 // Type definitions for views
 type ActiveView = 'dashboard' | 'todos' | 'componentes' | 'plano_manutencao' | 'ordens_manutencao' | 'equipes_manutencao' | 'notificacoes' | 'estoque_pecas' | 'compras_faturacao' | 'relatorios' | 'configuracoes' | 'fichatecnica';
@@ -72,9 +70,12 @@ export default function App() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isMobileWarningOpen, setIsMobileWarningOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [equipamentosOpen, setEquipamentosOpen] = useState<boolean>(false);
   const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -115,12 +116,18 @@ export default function App() {
       } else {
         setIsLoggedIn(false);
         setUser(null);
-        navigate('/login');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [location.pathname, navigate]);
+  }, []); // Run only on mount
+
+  // Separate effect for path redirection
+  useEffect(() => {
+    if (isLoggedIn && location.pathname === '/') {
+      navigate('/dashboard');
+    }
+  }, [isLoggedIn, location.pathname, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -193,7 +200,26 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors />
       {!isLoggedIn ? (
-        <LoginView onLogin={() => navigate('/dashboard')} />
+        <AnimatePresence mode="wait">
+          <Routes location={location}>
+            <Route path="/login" element={
+              <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} transition={{duration:0.2}}>
+                <LoginView onLogin={() => {
+                  setIsLoading(true);
+                  setLogs(['Iniciando sessão...', 'Conectando ao Supabase...', 'Carregando perfil do usuário...', 'Validando permissões...', 'Renderizando Dashboard...']);
+                  setTimeout(() => setIsLoading(false), 3000);
+                  navigate('/dashboard');
+                }} />
+              </motion.div>
+            } />
+            <Route path="/cadastrarse" element={
+              <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} transition={{duration:0.2}}>
+                <CadastrarseView />
+              </motion.div>
+            } />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </AnimatePresence>
       ) : (
         <div className="min-h-screen bg-slate-50 font-sans flex flex-col antialiased selection:bg-sky-500 selection:text-white">
           {/* BACKGROUND DECORATIONS (Subtle blue ambient orbs) */}
@@ -201,7 +227,7 @@ export default function App() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full filter blur-3xl pointer-events-none" />
 
           {/* FIXED HEADER (divided into 2 columns) */}
-          <header id="main-header" className="fixed top-0 right-0 left-0 md:left-64 h-16 bg-white/80 backdrop-blur-md border-b border-sky-100 z-30 flex items-center px-4 md:px-8 transition-all duration-300">
+          <header id="main-header" className="fixed top-0 right-0 left-0 md:left-80 h-16 bg-white/80 backdrop-blur-md border-b border-sky-100 z-30 flex items-center px-4 md:px-8 transition-all duration-300">
             <div className="w-full grid grid-cols-2 items-center">
               
               {/* Column 1: Left - Menu Toggle (Mobile) + Section Title */}
@@ -226,8 +252,18 @@ export default function App() {
           {/* Column 2: Right - User info and settings icon */}
           <div className="flex items-center justify-end gap-3 md:gap-6">
             
+            {/* Online Users */}
+            <OnlineUsers />
+
             {/* User Profile Badge */}
             <div className="relative flex items-center gap-2.5 border-l border-slate-100 pl-3 md:pl-6">
+              <button 
+                onClick={() => setIsNotificationsOpen(true)}
+                className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
+                aria-label="Abrir notificações"
+              >
+                <Bell size={20} />
+              </button>
               <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white font-inter font-bold text-sm shadow-md shadow-black/10 hover:bg-slate-900 transition-colors">
                 <User size={16} />
               </div>
@@ -275,21 +311,21 @@ export default function App() {
         {/* DESKTOP SIDEBAR (Fixed Left, always visible on MD+ screens) */}
         <aside 
           id="desktop-sidebar" 
-          className="hidden md:flex md:w-64 bg-slate-900 text-slate-300 flex-col fixed inset-y-0 left-0 z-50 border-r border-slate-800 shadow-xl"
+          className="hidden md:flex md:w-80 bg-slate-900 text-slate-300 flex-col fixed inset-y-0 left-0 z-50 border-r border-slate-800 shadow-xl"
         >
           {/* Sidebar Header & Brand Logo */}
           <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-            <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-10 w-auto" />
+            <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-12 w-auto" />
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto sidebar-scrollbar">
+          <nav className="flex-1 py-6 px-4 space-y-3 overflow-y-auto sidebar-scrollbar">
             
             {/* Dashboard Navigation */}
             <button
               id="nav-dashboard-desktop"
               onClick={() => handleViewChange('dashboard')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-none text-sm font-sans font-medium transition-all duration-150 group ${
+              className={`w-full flex items-center justify-between px-3 py-3 rounded-none text-[15px] border-b border-slate-700 font-sans font-medium transition-all duration-150 group ${
                 currentView === 'dashboard' 
                   ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/10' 
                   : 'hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
@@ -302,7 +338,7 @@ export default function App() {
             </button>
 
             {/* Equipamentos Navigation Block */}
-            <div className="space-y-1 pt-2">
+            <div className="space-y-2 pt-2">
               <div 
                 id="nav-equipamentos-group"
                 className={`flex items-center rounded-none text-sm font-sans font-medium transition-all duration-150 ${
@@ -343,7 +379,7 @@ export default function App() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden pl-7 pr-1 space-y-1 border-l border-slate-800 ml-5"
+                    className="overflow-hidden pl-7 pr-1 space-y-2 border-l border-slate-800 ml-5"
                   >
                     <button
                       id="nav-todos-desktop"
@@ -381,7 +417,7 @@ export default function App() {
             </div>
             
             {/* Manutenção Navigation Block */}
-            <div className="space-y-1 pt-2">
+            <div className="space-y-2 pt-2">
               <div 
                 id="nav-manutencao-group"
                 className={`flex items-center rounded-none text-sm font-sans font-medium transition-all duration-150 ${
@@ -422,7 +458,7 @@ export default function App() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden pl-7 pr-1 space-y-1 border-l border-slate-800 ml-5"
+                    className="overflow-hidden pl-7 pr-1 space-y-2 border-l border-slate-800 ml-5"
                   >
                     {[
                       { id: 'plano_manutencao', title: 'Planos', icon: Calendar },
@@ -452,7 +488,6 @@ export default function App() {
             
             {/* Other Modules */}
             {[
-              { id: 'notificacoes', title: 'Notificações', icon: Bell },
               { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
               { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
               { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
@@ -677,7 +712,6 @@ export default function App() {
                   
                   {/* Other Modules Mobile */}
                   {[
-                    { id: 'notificacoes', title: 'Notificações', icon: Bell },
                     { id: 'estoque_pecas', title: 'Estoque de Peças', icon: Package },
                     { id: 'compras_faturacao', title: 'Compras & Faturação', icon: ShoppingCart },
                     { id: 'relatorios', title: 'Relatórios', icon: BarChart3 },
@@ -718,8 +752,9 @@ export default function App() {
         {/* MAIN CENTRAL VIEW AREA (Scrollable and positioned nicely next to sidebar) */}
         <main 
           id="main-viewport" 
-          className="flex-1 flex flex-col md:pl-64 min-h-0 w-full transition-all duration-300"
+          className="flex-1 flex flex-col md:pl-80 min-h-0 w-full transition-all duration-300"
         >
+          <NotificationPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
           <div className="flex-1 w-full p-2 md:p-4">
             <CommitIndicator />
             {currentView !== 'dashboard' && (
@@ -752,8 +787,6 @@ export default function App() {
                   className="w-full h-full flex flex-col overflow-hidden relative"
                 >
                   
-
-
                   <Routes>
                     <Route path="/dashboard" element={<DashboardView />} />
                     <Route path="/equipamentos" element={<TodosEquipamentosView onNavigateToComponent={(id) => handleViewChange('componentes', id)} />} />
@@ -770,7 +803,6 @@ export default function App() {
                     <Route path="/ficha-tecnica" element={<FichaTecnicaView />} />
                     <Route path="/" element={<DashboardView />} />
                   </Routes>
-
 
                 </motion.div>
               </AnimatePresence>
@@ -815,7 +847,7 @@ export default function App() {
 
       <footer 
         id="main-footer" 
-        className="fixed bottom-0 right-0 left-0 md:left-64 h-8 bg-slate-50/50 backdrop-blur-sm border-t border-slate-100/60 z-30 flex items-center justify-center px-4 md:px-8 transition-all duration-300"
+        className="fixed bottom-0 right-0 left-0 md:left-80 h-8 bg-slate-50/50 backdrop-blur-sm border-t border-slate-100/60 z-30 flex items-center justify-center px-4 md:px-8 transition-all duration-300"
       >
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-2 text-[10px] font-inter text-slate-400">
           
@@ -831,7 +863,6 @@ export default function App() {
 
         </div>
       </footer>
-
         </div>
       )}
     </>

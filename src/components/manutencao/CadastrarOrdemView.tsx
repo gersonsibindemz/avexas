@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { OrdemManutencao, TipoManutencao, PrioridadeManutencao, StatusOrdem, Equipamento, Profile, Peca } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -128,36 +128,28 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Tipo</label>
+          <label className="block text-sm font-medium text-slate-700">Tipo de manutenção</label>
           <select value={tipoId} onChange={(e) => setTipoId(Number(e.target.value))} className="mt-1 block w-full border border-slate-300 p-2 text-sm">
             <option value="">Selecione</option>
             {tipos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Prioridade</label>
+          <label className="block text-sm font-medium text-slate-700">Nível de prioridade</label>
           <select value={prioridadeId} onChange={(e) => setPrioridadeId(Number(e.target.value))} className="mt-1 block w-full border border-slate-300 p-2 text-sm">
             <option value="">Selecione</option>
             {prioridades.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Status</label>
+          <label className="block text-sm font-medium text-slate-700">Estado da Ordem</label>
           <select value={statusId} onChange={(e) => setStatusId(Number(e.target.value))} className="mt-1 block w-full border border-slate-300 p-2 text-sm">
             <option value="">Selecione</option>
             {statusOpcoes.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
           </select>
         </div>
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-slate-700">Descrição</label>
-          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2 text-sm" rows={3} />
-        </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Data de Execução</label>
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2 text-sm" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Técnico</label>
+          <label className="block text-sm font-medium text-slate-700">Técnico a alocar</label>
           <select value={tecnicoId} onChange={(e) => setTecnicoId(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2 text-sm">
             <option value="">Selecione um técnico</option>
             {tecnicos.map(t => (
@@ -165,8 +157,16 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
             ))}
           </select>
         </div>
-        <div className="col-span-2 border-t pt-4 mt-4">
-          <label className="block text-sm font-medium text-slate-700 mb-2">Peças</label>
+        <div className="col-span-2">
+          <label className="block text-sm font-medium text-slate-700">Data de início da manutenção</label>
+          <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2 text-sm" />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-sm font-medium text-slate-700">Descrição técnica</label>
+          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} className="mt-1 block w-full border border-slate-300 p-2 text-sm" rows={3} />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Peças necessárias</label>
           {pecasSelecionadas.map((ps, index) => (
             <div key={index} className="flex gap-2 mb-2 items-center">
               <select value={ps.pecaId} onChange={e => {
@@ -182,7 +182,7 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
                   newPecas[index].quantidade = parseInt(e.target.value);
                   setPecasSelecionadas(newPecas);
               }} className="border border-slate-300 p-2 text-sm w-20" placeholder="Qtd" />
-              <button onClick={() => setPecasSelecionadas(pecasSelecionadas.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700">Remover</button>
+              <button onClick={() => setPecasSelecionadas(pecasSelecionadas.filter((_, i) => i !== index))} className="text-slate-400 hover:text-red-500 transition-colors"><X size={18} /></button>
             </div>
           ))}
           <button onClick={() => setPecasSelecionadas([...pecasSelecionadas, { pecaId: '', quantidade: 1 }])} className="text-sky-600 hover:text-sky-800 text-sm font-medium mt-2">+ Adicionar Peça</button>
@@ -191,10 +191,10 @@ export const CadastrarOrdemView: React.FC<CadastrarOrdemProps> = ({ onCancel, on
       
       <div className="flex justify-end gap-4 items-center mt-6">
         {error && <p className="text-red-500 text-xs">{error}</p>}
-        <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Cancelar</button>
+        <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Voltar</button>
         <button onClick={handleSave} disabled={loading || !equipamentoId || !tecnicoId || !tipoId || !prioridadeId || !statusId} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400">
             {loading && <Loader2 className="animate-spin" size={16} />}
-            {loading ? 'Salvando...' : 'Salvar Ordem'}
+            {loading ? 'Salvando...' : 'Criar nova Ordem'}
         </button>
       </div>
     </div>

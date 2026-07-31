@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { translateMessage } from '../../lib/translator';
 
 interface LoginViewProps {
   onLogin: () => void;
@@ -9,11 +12,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -22,7 +24,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      toast.error(translateMessage(error.message));
     } else {
       onLogin();
     }
@@ -38,7 +40,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
         </div>
 
         <form onSubmit={handleLogin} className="bg-white p-8 shadow-2xl space-y-4">
-          {error && <p className="text-red-500 text-xs">{error}</p>}
           <input
             type="email"
             placeholder="Email"
@@ -62,6 +63,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           >
             {loading ? 'Entrando...' : 'Iniciar Sessão'}
           </button>
+          
+          <div className="text-center mt-4">
+            <Link
+              to="/cadastrarse"
+              className="text-sm font-semibold text-sky-600 hover:text-sky-800 transition-colors"
+            >
+              Criar nova conta
+            </Link>
+          </div>
         </form>
       </div>
 

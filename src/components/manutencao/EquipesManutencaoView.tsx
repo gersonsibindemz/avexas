@@ -71,12 +71,31 @@ export const EquipesManutencaoView: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">Equipes de Manutenção</h2>
-        <button 
-          onClick={() => setAdding(true)} 
-          className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 hover:bg-sky-700 rounded"
-        >
-          <Plus size={18} /> Adicionar Técnico
-        </button>
+        <div className="flex gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Pesquisar por Técnico..."
+            className="border border-slate-300 p-2 text-sm rounded w-64"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <select
+            className="border border-slate-300 p-2 text-sm rounded"
+            value={filterEspecialidade}
+            onChange={(e) => setFilterEspecialidade(e.target.value)}
+          >
+            <option value="">Todas as especialidades</option>
+            {especialidades.map(e => (
+              <option key={e} value={e}>{e}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 hover:bg-sky-700 rounded text-sm"
+          >
+            <Plus size={18} /> Adicionar Técnico
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -120,26 +139,6 @@ export const EquipesManutencaoView: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="flex gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Pesquisar por Técnico..."
-          className="border border-slate-300 p-2 rounded flex-1"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <select
-          className="border border-slate-300 p-2 rounded"
-          value={filterEspecialidade}
-          onChange={(e) => setFilterEspecialidade(e.target.value)}
-        >
-          <option value="">Todas as especialidades</option>
-          {especialidades.map(e => (
-            <option key={e} value={e}>{e}</option>
-          ))}
-        </select>
-      </div>
 
       {loading ? (
         <div className="flex justify-center p-10"><Loader2 className="animate-spin text-sky-600" /></div>

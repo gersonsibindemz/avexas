@@ -9,7 +9,6 @@ export const EstoquePecasView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState<'codigo' | 'descricao'>('codigo');
   
   const [form, setForm] = useState<Omit<Peca, 'id'>>({
     codigo: '',
@@ -43,21 +42,28 @@ export const EstoquePecasView: React.FC = () => {
 
   const filteredPecas = pecas.filter(p => {
     const query = searchQuery.toLowerCase();
-    return filterBy === 'codigo' 
-      ? p.codigo.toLowerCase().includes(query)
-      : p.descricao.toLowerCase().includes(query);
+    return p.codigo.toLowerCase().includes(query) || p.descricao.toLowerCase().includes(query);
   });
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-slate-800">Estoque de Peças</h2>
-        <button 
-          onClick={() => setAdding(!adding)} 
-          className="bg-sky-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-sky-700"
-        >
-          <Plus size={18} /> Adicionar Peça
-        </button>
+        <div className="flex gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Pesquisar..."
+            className="border border-slate-300 p-2 text-sm rounded w-64"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button 
+            onClick={() => setAdding(!adding)} 
+            className="bg-sky-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-sky-700 text-sm"
+          >
+            <Plus size={18} /> Adicionar Peça
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -107,24 +113,6 @@ export const EstoquePecasView: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex gap-4 mb-4">
-        <select 
-          className="border border-slate-300 p-2 rounded"
-          value={filterBy}
-          onChange={(e) => setFilterBy(e.target.value as 'codigo' | 'descricao')}
-        >
-          <option value="codigo">Filtrar por Código</option>
-          <option value="descricao">Filtrar por Descrição</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Pesquisar..."
-          className="flex-1 border border-slate-300 p-2 rounded"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
       {loading ? (
         <div className="flex justify-center p-10"><Loader2 className="animate-spin text-sky-600" /></div>
       ) : (
@@ -135,10 +123,7 @@ export const EstoquePecasView: React.FC = () => {
                 <th className="px-6 py-4">Código</th>
                 <th className="px-6 py-4">Descrição</th>
                 <th className="px-6 py-4">Unidade</th>
-                <th className="px-6 py-4">Preço</th>
-                <th className="px-6 py-4">Fornecedor</th>
                 <th className="px-6 py-4">Estoque</th>
-                <th className="px-6 py-4">Reorder Point</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -147,10 +132,7 @@ export const EstoquePecasView: React.FC = () => {
                   <td className="px-6 py-4">{p.codigo}</td>
                   <td className="px-6 py-4">{p.descricao}</td>
                   <td className="px-6 py-4">{p.unidade}</td>
-                  <td className="px-6 py-4">{p.preco.toFixed(2)}</td>
-                  <td className="px-6 py-4">{p.fornecedor}</td>
                   <td className="px-6 py-4">{p.estoque}</td>
-                  <td className="px-6 py-4">{p.reorder_point}</td>
                 </tr>
               ))}
             </tbody>
