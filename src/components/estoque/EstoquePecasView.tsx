@@ -34,6 +34,12 @@ export const EstoquePecasView: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const handleRegister = () => setAdding(true);
+    window.addEventListener('trigger-register-peca', handleRegister);
+    return () => window.removeEventListener('trigger-register-peca', handleRegister);
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('pecas').select('*');
@@ -79,12 +85,6 @@ export const EstoquePecasView: React.FC = () => {
               </div>
             )}
           </div>
-          <button 
-            onClick={() => setAdding(!adding)} 
-            className="bg-sky-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-sky-700 text-sm"
-          >
-            <Plus size={18} /> Adicionar Peça
-          </button>
         </div>
       </div>
 

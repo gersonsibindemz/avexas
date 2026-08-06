@@ -5,6 +5,7 @@ import { CadastrarEquipamentoView } from './CadastrarEquipamentoView';
 import { DetalhesEquipamentoView } from './DetalhesEquipamentoView';
 import { SummaryBar } from './SummaryBar';
 import { FilterModal } from './FilterModal';
+import { HistoricoManutencaoModal } from './HistoricoManutencaoModal';
 import { supabase } from '../../lib/supabaseClient';
 import { Equipamento, AdvancedFilters } from '../../types';
 
@@ -12,6 +13,8 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [selectedEquipamentoId, setSelectedEquipamentoId] = useState<string | null>(null);
+  const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
+  const [selectedEquipamentoForHistoricoId, setSelectedEquipamentoForHistoricoId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [filteredEquipamentos, setFilteredEquipamentos] = useState<Equipamento[] | null>(null);
@@ -182,6 +185,9 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
     } else if (action === 'Editar Equipamento') {
       const eq = equipamentos.find(e => e.id === id);
       if (eq) setEditingEquipamento(eq);
+    } else if (action === 'Histórico de Manutenção') {
+      setSelectedEquipamentoForHistoricoId(id);
+      setIsHistoricoModalOpen(true);
     }
   };
 
@@ -193,6 +199,12 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
     e.stopPropagation();
     setActiveMenuId(activeMenuId === id ? null : id);
   };
+
+  React.useEffect(() => {
+    const handleRegister = () => setIsRegistering(true);
+    window.addEventListener('trigger-register-equipamento', handleRegister);
+    return () => window.removeEventListener('trigger-register-equipamento', handleRegister);
+  }, []);
 
   React.useEffect(() => {
     const handleClickOutside = () => {
@@ -260,10 +272,6 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
         
         {/* Action Button */}
         <div className="flex gap-2">
-          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-            <Plus size={16} />
-            Novo Equipamento
-          </button>
         </div>
       </div>
       
@@ -276,6 +284,12 @@ export const TodosEquipamentosView: React.FC<{onNavigateToComponent: (id: string
           advancedFilters={advancedFilters}
           onAdvancedFiltersChange={(filters) => setAdvancedFilters(filters)}
           availableLocations={availableLocations}
+      />
+
+      <HistoricoManutencaoModal
+          isOpen={isHistoricoModalOpen}
+          onClose={() => setIsHistoricoModalOpen(false)}
+          equipamentoId={selectedEquipamentoForHistoricoId}
       />
 
       {/* Table */}

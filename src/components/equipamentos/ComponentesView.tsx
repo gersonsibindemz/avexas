@@ -201,6 +201,12 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
   };
 
   useEffect(() => {
+    const handleRegister = () => setIsRegistering(true);
+    window.addEventListener('trigger-register-componente', handleRegister);
+    return () => window.removeEventListener('trigger-register-componente', handleRegister);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = () => {
       setActiveMenuId(null);
     };
@@ -265,10 +271,6 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
         
         {/* Action Button */}
         <div className="flex gap-2">
-          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-            <Plus size={16} />
-            Nova Componente
-          </button>
         </div>
       </div>
       

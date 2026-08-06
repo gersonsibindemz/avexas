@@ -38,6 +38,12 @@ export const EquipesManutencaoView: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const handleRegister = () => setAdding(true);
+    window.addEventListener('trigger-register-equipe', handleRegister);
+    return () => window.removeEventListener('trigger-register-equipe', handleRegister);
+  }, []);
+
   async function fetchData() {
     setLoading(true);
     const { data: techs, error: techsError } = await supabase
@@ -111,12 +117,6 @@ export const EquipesManutencaoView: React.FC = () => {
               <option key={e} value={e}>{e}</option>
             ))}
           </select>
-          <button
-            onClick={() => setAdding(true)}
-            className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 hover:bg-sky-700 rounded text-sm"
-          >
-            <Plus size={18} /> Adicionar Técnico
-          </button>
         </div>
       </div>
 

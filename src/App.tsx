@@ -28,7 +28,8 @@ import {
   Cog,
   PanelLeftOpen,
   PanelLeftClose,
-  Home
+  Home,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
@@ -814,22 +815,79 @@ export default function App() {
           <NotificationPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
           <div className="flex-1 w-full p-2 md:p-4">
             <CommitIndicator />
-            <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2">
-                <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors flex items-center">
-                  <Home size={12} />
-                </button>
-                {currentView !== 'dashboard' && getBreadcrumbItems(currentView).map((item, index) => (
-                  <Fragment key={index}>
-                    <span>/</span>
-                    <button 
-                      onClick={() => item.view ? handleViewChange(item.view) : undefined} 
-                      className={`${index === getBreadcrumbItems(currentView).length - 1 ? 'font-semibold text-slate-600' : 'hover:text-sky-600'} cursor-pointer transition-colors`}
-                    >
-                      {item.label}
+            <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2 w-full justify-between">
+                <div className="flex items-center gap-1.5">
+                    <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors flex items-center">
+                    <Home size={12} />
                     </button>
-                  </Fragment>
-                ))}
-              </div>
+                    {currentView !== 'dashboard' && getBreadcrumbItems(currentView).map((item, index) => (
+                    <Fragment key={index}>
+                        <span>/</span>
+                        <button 
+                        onClick={() => item.view ? handleViewChange(item.view) : undefined} 
+                        className={`${index === getBreadcrumbItems(currentView).length - 1 ? 'font-semibold text-slate-600' : 'hover:text-sky-600'} cursor-pointer transition-colors`}
+                        >
+                        {item.label}
+                        </button>
+                    </Fragment>
+                    ))}
+                </div>
+                
+                {currentView === 'todos' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-equipamento'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Cadastrar Novo Equipamento"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+                {currentView === 'componentes' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-componente'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Cadastrar Nova Componente"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+                {currentView === 'plano_manutencao' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-plano'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Cadastrar Novo Plano"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+                {currentView === 'ordens_manutencao' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-ordem'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Cadastrar Nova Ordem"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+                {currentView === 'equipes_manutencao' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-equipe'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Adicionar Técnico"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+                {currentView === 'estoque_pecas' && (
+                    <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-register-peca'))}
+                        className="w-8 h-8 rounded-full bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center"
+                        title="Adicionar Peça"
+                    >
+                        <Plus size={16} />
+                    </button>
+                )}
+            </div>
             
             {/* VIEW CONTENT TRANSITION FRAMEWORK */}
             <div className="flex-1 flex flex-col">

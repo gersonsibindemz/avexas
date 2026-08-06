@@ -33,6 +33,12 @@ export const OrdensManutencaoView: React.FC = () => {
     fetchOrdens();
   }, []);
 
+  useEffect(() => {
+    const handleRegister = () => setIsRegistering(true);
+    window.addEventListener('trigger-register-ordem', handleRegister);
+    return () => window.removeEventListener('trigger-register-ordem', handleRegister);
+  }, []);
+
   const fetchOrdens = async () => {
     setLoading(true);
     const [
@@ -145,10 +151,6 @@ export const OrdensManutencaoView: React.FC = () => {
             <option value="">Todos os Status</option>
             {statusOpcoes.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
           </select>
-          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-            <Plus size={16} />
-            Nova Ordem
-          </button>
         </div>
       </div>
 

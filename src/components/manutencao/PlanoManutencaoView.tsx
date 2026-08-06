@@ -29,6 +29,12 @@ export const PlanoManutencaoView: React.FC = () => {
     fetchStatusOpcoes();
   }, []);
 
+  useEffect(() => {
+    const handleRegister = () => setIsRegistering(true);
+    window.addEventListener('trigger-register-plano', handleRegister);
+    return () => window.removeEventListener('trigger-register-plano', handleRegister);
+  }, []);
+
   const fetchPlanos = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -102,9 +108,6 @@ export const PlanoManutencaoView: React.FC = () => {
                       </div>
                     )}
                 </div>
-                <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 hover:bg-sky-700">
-                  <Plus size={18} /> Novo Plano
-                </button>
             </div>
             <button 
               onClick={() => setViewMode(viewMode === 'table' ? 'calendar' : 'table')} 
