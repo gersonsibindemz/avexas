@@ -105,6 +105,18 @@ export default function App() {
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  
+  const formatDate = (date: Date) => {
+      const d = date.toLocaleDateString('pt-BR');
+      const t = date.toLocaleTimeString('pt-BR', { hour12: false });
+      return `${d} - ${t}`;
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -917,6 +929,7 @@ export default function App() {
                     <Route path="/configuracoes" element={<ConfiguracoesView />} />
                     <Route path="/ficha-tecnica" element={<FichaTecnicaView />} />
                     <Route path="/" element={<DashboardView />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
 
                 </motion.div>
@@ -968,12 +981,12 @@ export default function App() {
           
           {/* Logo / app name in the left */}
           <div className="flex items-center gap-1.5 opacity-80">
-            <span className="font-sans font-bold text-sky-900 tracking-wider">Avexas</span>
+            <span className="font-sans font-bold text-sky-900 tracking-wider">{selectedCompany?.name || 'Avexas'}</span>
           </div>
 
           {/* Copyright and developer on the right */}
           <div className="flex items-center gap-1 opacity-80">
-            <span className="text-[9px] text-slate-400 opacity-60">© 2026 | Todos os direitos reservados</span>
+            <span className="text-[9px] text-slate-400 opacity-60">{formatDate(currentTime)}</span>
           </div>
 
         </div>
