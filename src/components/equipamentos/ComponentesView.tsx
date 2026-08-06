@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Filter, MoreVertical, Box, Plus } from 'lucide-react';
+import { Search, Filter, MoreVertical, Box, Plus, Loader2 } from 'lucide-react';
 import { ActionsMenu } from './ActionsMenu';
 import { CadastrarComponenteView } from './CadastrarComponenteView';
 import { DetalhesComponenteView } from './DetalhesComponenteView';
@@ -222,20 +222,10 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
   return (
     <div className="flex-1 flex flex-col p-6 space-y-6">
       {/* Top Controls */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">Todos os Componentes</h1>
-        <div className="flex gap-2">
-          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
-            <Plus size={16} />
-            Nova Componente
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-2 gap-4 items-center">
-        <div className="flex gap-2 items-center flex-1">
-            <div className="relative flex-1 md:max-w-md">
+      <div className="flex justify-between items-center mb-6">
+        {/* Filters */}
+        <div className="flex gap-2 items-center flex-1 mr-4">
+            <div className="relative flex-1 md:max-w-md ml-0">
               <input 
                 type="text" 
                 placeholder="Pesquisar..." 
@@ -246,8 +236,15 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
                 onKeyDown={handleKeyDown}
-                className="w-full px-4 py-2 bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500" 
+                className="w-full px-4 py-2 bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10" 
               />
+              <button 
+                  onClick={handleSearch} 
+                  disabled={loading}
+                  className="absolute right-0 top-0 h-full px-2 text-slate-500 bg-transparent border-none flex items-center justify-center hover:text-slate-900"
+              >
+                {loading ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
+              </button>
               {dropdownResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 shadow-lg z-50 max-h-60 overflow-y-auto">
                       {dropdownResults.map((comp, index) => (
@@ -263,16 +260,15 @@ export const ComponentesView: React.FC<ComponentesViewProps> = ({ selectedCompon
                   </div>
               )}
             </div>
-            <button 
-                onClick={handleSearch} 
-                disabled={loading}
-                className={`flex items-center justify-center px-3 py-2 bg-transparent text-slate-600 border border-slate-200 ${loading ? 'opacity-50' : 'hover:bg-slate-100'}`}
-            >
-              {loading ? <div className="animate-spin h-4 w-4 border-2 border-slate-600 border-t-transparent rounded-full" /> : <Search size={16} />}
-            </button>
+            <SummaryBar table="componentes" activeStatus={selectedStatus} onFilterClick={() => setIsFilterModalOpen(true)} />
         </div>
-        <div className="flex justify-end">
-          <SummaryBar table="componentes" activeStatus={selectedStatus} onFilterClick={() => setIsFilterModalOpen(true)} />
+        
+        {/* Action Button */}
+        <div className="flex gap-2">
+          <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+            <Plus size={16} />
+            Nova Componente
+          </button>
         </div>
       </div>
       

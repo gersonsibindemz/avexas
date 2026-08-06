@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MoreVertical } from 'lucide-react';
+import { Plus, MoreVertical, Search, Loader2 } from 'lucide-react';
 import { OrdemManutencao } from '../../types';
 import { FormCard } from '../common/FormCard';
 import { CadastrarOrdemView } from './CadastrarOrdemView';
@@ -16,8 +16,18 @@ export const OrdensManutencaoView: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemManutencao | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterQuery, setFilterQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
+
+  const handleSearch = () => {
+    setIsSearching(true);
+    setFilterQuery(searchQuery);
+    setShowDropdown(false);
+    setTimeout(() => setIsSearching(false), 500); // Fake loading
+  };
 
   useEffect(() => {
     fetchOrdens();
@@ -64,8 +74,9 @@ export const OrdensManutencaoView: React.FC = () => {
     setLoading(false);
   };
 
+  const suggestions = ordens.filter(o => (o.equipamento_nome || '').toLowerCase().includes(searchQuery.toLowerCase()) && searchQuery.length > 0);
   const filteredOrdens = ordens.filter(ordem => 
-    (ordem.equipamento_nome || '').toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (ordem.equipamento_nome || '').toLowerCase().includes(filterQuery.toLowerCase()) &&
     (statusFilter === '' || ordem.status === statusFilter)
   );
 
@@ -105,16 +116,27 @@ export const OrdensManutencaoView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">Ordens de Manutenção</h1>
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-4 items-center">
-          <input 
-            type="text" 
-            placeholder="Pesquisar por equipamento..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="border border-slate-300 p-2 text-sm w-64"
-          />
+          <div className="relative w-64">
+            <input 
+              type="text" 
+              placeholder="Pesquisar por equipamento..." 
+              value={searchQuery}
+              onChange={(e) => {setSearchQuery(e.target.value); setShowDropdown(true);}}
+              className="border border-slate-300 p-2 text-sm w-full pr-10"
+            />
+            <button onClick={handleSearch} className="absolute right-0 top-0 h-full px-2 text-slate-500 bg-transparent border-none flex items-center justify-center hover:text-slate-900">
+                {isSearching ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
+            </button>
+            {showDropdown && searchQuery && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-300 rounded shadow-lg z-50">
+                  {suggestions.map(s => (
+                      <button key={s.id} onClick={() => {setSearchQuery(s.equipamento_nome || ''); setShowDropdown(false);}} className="block w-full text-left px-4 py-2 hover:bg-slate-100 text-sm">{s.equipamento_nome}</button>
+                  ))}
+              </div>
+            )}
+          </div>
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

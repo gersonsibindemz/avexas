@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { 
@@ -27,7 +27,8 @@ import {
   Settings,
   Cog,
   PanelLeftOpen,
-  PanelLeftClose
+  PanelLeftClose,
+  Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginView } from './components/login/LoginView';
@@ -48,9 +49,9 @@ import { NotificationPanel } from './components/notificacoes/NotificationPanel';
 import { FichaTecnicaView } from './components/relatorios/FichaTecnicaView';
 import { CommitIndicator } from './components/temp/CommitIndicator';
 import { supabase } from './lib/supabaseClient';
-import { OnlineUsers } from './components/common/OnlineUsers';
 import { DashboardSkeleton } from './components/common/DashboardSkeleton';
 import { LoadingLogs } from './components/common/LoadingLogs';
+import { Company, CompanyMember } from './types';
 
 // Type definitions for views
 type ActiveView = 'dashboard' | 'todos' | 'componentes' | 'plano_manutencao' | 'ordens_manutencao' | 'equipes_manutencao' | 'notificacoes' | 'estoque_pecas' | 'compras_faturacao' | 'relatorios' | 'configuracoes' | 'fichatecnica';
@@ -76,9 +77,48 @@ export default function App() {
   const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const companyDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const fetchUserCompanies = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('company_members')
+      .select('company_id, companies (id, name)')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching companies:', error);
+      return;
+    }
+
+    const companyList = (data as any[]).map(item => item.companies as Company);
+    setCompanies(companyList);
+    if (companyList.length > 0) {
+      setSelectedCompany(companyList[0]);
+    }
+  };
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target as Node)) {
+        setIsCompanyDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userDropdownRef, companyDropdownRef]);
 
   // Derive current view from location
   const currentView: ActiveView = location.pathname === '/equipamentos/componentes' 
@@ -91,6 +131,7 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
+        fetchUserCompanies(session.user.id);
         if (window.innerWidth < 768) {
             setIsMobileWarningOpen(true);
         }
@@ -109,6 +150,7 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsLoggedIn(true);
+        fetchUserCompanies(session.user.id);
         supabase.from('profiles').select('name, surname, role').eq('id', session.user.id).single().then(({ data, error }) => {
           if (error) console.error('Error fetching profile:', error);
           else if (data) setUser(data as UserProfile);
@@ -217,7 +259,7 @@ export default function App() {
                 <CadastrarseView />
               </motion.div>
             } />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={location.pathname === '/login' || location.pathname === '/cadastrarse' ? <Navigate to="/login" replace /> : null} />
           </Routes>
         </AnimatePresence>
       ) : (
@@ -252,11 +294,8 @@ export default function App() {
           {/* Column 2: Right - User info and settings icon */}
           <div className="flex items-center justify-end gap-3 md:gap-6">
             
-            {/* Online Users */}
-            <OnlineUsers />
-
             {/* User Profile Badge */}
-            <div className="relative flex items-center gap-2.5 border-l border-slate-100 pl-3 md:pl-6">
+            <div ref={userDropdownRef} className="relative flex items-center gap-2.5 border-l border-slate-100 pl-3 md:pl-6">
               <button 
                 onClick={() => setIsNotificationsOpen(true)}
                 className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
@@ -264,25 +303,23 @@ export default function App() {
               >
                 <Bell size={20} />
               </button>
-              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white font-inter font-bold text-sm shadow-md shadow-black/10 hover:bg-slate-900 transition-colors">
-                <User size={16} />
-              </div>
-              <div className="hidden md:flex flex-col text-left">
-                <button 
-                  className="flex items-center gap-1 font-inter font-semibold text-sm text-slate-800 leading-none"
-                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                >
-                  {user?.name} {user?.surname}
-                  <ChevronDown size={14} className={`transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <span className="font-inter text-[10px] text-slate-400 font-medium">
-                  {user?.role}
+              <button
+                title={`${user?.name} ${user?.surname}`}
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                className="w-8 h-8 rounded-full bg-[#96aed1] flex items-center justify-center text-white font-inter font-bold text-sm shadow-md shadow-black/10 hover:bg-[#859dc0] transition-colors"
+              >
+                <span className="text-xs">
+                  {user?.name?.charAt(0).toUpperCase() || ''}
+                  {user?.surname?.charAt(0).toUpperCase() || ''}
                 </span>
-              </div>
+              </button>
               
               {/* Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-slate-200 shadow-lg rounded-none py-1 z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 shadow-lg rounded-none py-1 z-50">
+                    <div className="px-4 py-2 text-sm font-semibold text-slate-800 border-b border-slate-100">
+                      {user?.name} {user?.surname}
+                    </div>
                     <button 
                       onClick={() => { handleViewChange('configuracoes'); setIsUserDropdownOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
@@ -314,8 +351,28 @@ export default function App() {
           className="hidden md:flex md:w-80 bg-slate-900 text-slate-300 flex-col fixed inset-y-0 left-0 z-50 border-r border-slate-800 shadow-xl"
         >
           {/* Sidebar Header & Brand Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-            <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-12 w-auto" />
+          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900 relative">
+            <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-10 w-auto" />
+            <button
+                onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                className="text-white hover:text-sky-400"
+            >
+                <ChevronDown size={20} />
+            </button>
+            {isCompanyDropdownOpen && (
+                <div ref={companyDropdownRef} className="absolute top-full left-0 w-full bg-slate-700 text-white z-50 shadow-lg py-2">
+                    <div className="px-4 py-1 text-xs text-slate-300 uppercase tracking-wider">Visualizar como:</div>
+                    {companies.map(company => (
+                        <button
+                            key={company.id}
+                            onClick={() => { setSelectedCompany(company); setIsCompanyDropdownOpen(false); }}
+                            className={`block w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 ${selectedCompany?.id === company.id ? 'bg-slate-600' : ''}`}
+                        >
+                            {company.name}
+                        </button>
+                    ))}
+                </div>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -757,10 +814,11 @@ export default function App() {
           <NotificationPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
           <div className="flex-1 w-full p-2 md:p-4">
             <CommitIndicator />
-            {currentView !== 'dashboard' && (
-              <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2">
-                <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors">Avexas</button>
-                {getBreadcrumbItems(currentView).map((item, index) => (
+            <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2">
+                <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors flex items-center">
+                  <Home size={12} />
+                </button>
+                {currentView !== 'dashboard' && getBreadcrumbItems(currentView).map((item, index) => (
                   <Fragment key={index}>
                     <span>/</span>
                     <button 
@@ -772,7 +830,6 @@ export default function App() {
                   </Fragment>
                 ))}
               </div>
-            )}
             
             {/* VIEW CONTENT TRANSITION FRAMEWORK */}
             <div className="flex-1 flex flex-col">

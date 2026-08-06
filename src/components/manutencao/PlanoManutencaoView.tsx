@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, Calendar as CalendarIcon, Table as TableIcon } from 'lucide-react';
+import { Plus, Loader2, Calendar as CalendarIcon, Table as TableIcon, Search } from 'lucide-react';
 import { PlanoManutencao } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 import { FormCard } from '../common/FormCard';
@@ -10,9 +10,19 @@ export const PlanoManutencaoView: React.FC = () => {
   const [planos, setPlanos] = useState<PlanoManutencao[]>([]);
   const [statusOpcoes, setStatusOpcoes] = useState<{id: string, nome: string}[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterTerm, setFilterTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleSearch = () => {
+    setIsSearching(true);
+    setFilterTerm(searchTerm);
+    setShowDropdown(false);
+    setTimeout(() => setIsSearching(false), 500); // Fake loading
+  };
 
   useEffect(() => {
     fetchPlanos();
@@ -56,10 +66,11 @@ export const PlanoManutencaoView: React.FC = () => {
     }
   };
 
+  const suggestions = planos.filter(p => (p.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) || p.ordem_descricao?.toLowerCase().includes(searchTerm.toLowerCase())) && searchTerm.length > 0);
   const filteredPlanos = planos.filter(plano => 
-      plano.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plano.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plano.ordem_descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+      plano.titulo?.toLowerCase().includes(filterTerm.toLowerCase()) ||
+      plano.descricao?.toLowerCase().includes(filterTerm.toLowerCase()) ||
+      plano.ordem_descricao?.toLowerCase().includes(filterTerm.toLowerCase())
   );
 
   return (
@@ -70,27 +81,38 @@ export const PlanoManutencaoView: React.FC = () => {
         </FormCard>
       ) : (
         <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-slate-800">Planos de Manutenção</h2>
+          <div className="flex justify-between items-center mb-6">
             <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="border border-slate-300 px-4 py-2 text-sm"
-                />
-                <button 
-                  onClick={() => setViewMode(viewMode === 'table' ? 'calendar' : 'table')} 
-                  className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 hover:bg-slate-50"
-                >
-                  {viewMode === 'table' ? <CalendarIcon size={18} /> : <TableIcon size={18} />}
-                  {viewMode === 'table' ? 'Ver Calendário' : 'Ver Tabela'}
-                </button>
+                <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar..." 
+                      value={searchTerm}
+                      onChange={(e) => {setSearchTerm(e.target.value); setShowDropdown(true);}}
+                      className="border border-slate-300 px-4 py-2 text-sm w-full pr-10"
+                    />
+                    <button onClick={handleSearch} className="absolute right-0 top-0 h-full px-2 text-slate-500 bg-transparent border-none flex items-center justify-center hover:text-slate-900">
+                        {isSearching ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
+                    </button>
+                    {showDropdown && searchTerm && suggestions.length > 0 && (
+                      <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-300 rounded shadow-lg z-50">
+                          {suggestions.map(s => (
+                              <button key={s.id} onClick={() => {setSearchTerm(s.titulo || ''); setShowDropdown(false);}} className="block w-full text-left px-4 py-2 hover:bg-slate-100 text-sm">{s.titulo}</button>
+                          ))}
+                      </div>
+                    )}
+                </div>
                 <button onClick={() => setIsRegistering(true)} className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 hover:bg-sky-700">
                   <Plus size={18} /> Novo Plano
                 </button>
             </div>
+            <button 
+              onClick={() => setViewMode(viewMode === 'table' ? 'calendar' : 'table')} 
+              className="p-2 text-slate-700 hover:bg-slate-100 rounded"
+              title={viewMode === 'table' ? 'Ver Calendário' : 'Ver Tabela'}
+            >
+              {viewMode === 'table' ? <CalendarIcon size={20} /> : <TableIcon size={20} />}
+            </button>
           </div>
 
           {loading ? (
