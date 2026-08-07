@@ -77,6 +77,7 @@ export default function App() {
   const [equipamentosOpen, setEquipamentosOpen] = useState<boolean>(false);
   const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -156,6 +157,7 @@ export default function App() {
           else if (data) setUser(data as UserProfile);
         });
       }
+      setIsAuthInitialized(true);
     });
 
     const {
@@ -172,6 +174,7 @@ export default function App() {
         setIsLoggedIn(false);
         setUser(null);
       }
+      setIsAuthInitialized(true);
     });
 
     return () => subscription.unsubscribe();
@@ -254,7 +257,14 @@ export default function App() {
   return (
     <>
       <Toaster position="top-right" richColors />
-      {!isLoggedIn ? (
+      {!isAuthInitialized ? (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-600 font-medium">Carregando...</p>
+          </div>
+        </div>
+      ) : !isLoggedIn ? (
         <AnimatePresence mode="wait">
           <Routes location={location}>
             <Route path="/login" element={
@@ -272,7 +282,7 @@ export default function App() {
                 <CadastrarseView />
               </motion.div>
             } />
-            <Route path="*" element={location.pathname === '/login' || location.pathname === '/cadastrarse' ? <Navigate to="/login" replace /> : null} />
+            <Route path="*" element={location.pathname === '/login' || location.pathname === '/cadastrarse' ? <Navigate to="/login" replace /> : <Navigate to="/login" replace />} />
           </Routes>
         </AnimatePresence>
       ) : (
