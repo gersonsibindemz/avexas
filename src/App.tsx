@@ -45,10 +45,9 @@ import { NotificacoesView } from './components/notificacoes/NotificacoesView';
 import { EstoquePecasView } from './components/estoque/EstoquePecasView';
 import { ComprasFaturacaoView } from './components/compras/ComprasFaturacaoView';
 import { RelatoriosView } from './components/relatorios/RelatoriosView';
-import { ConfiguracoesView } from './components/configuracoes/ConfiguracoesView';
+import { ConfiguracoesPanel } from './components/configuracoes/ConfiguracoesPanel';
 import { NotificationPanel } from './components/notificacoes/NotificationPanel';
 import { FichaTecnicaView } from './components/relatorios/FichaTecnicaView';
-import { CommitIndicator } from './components/temp/CommitIndicator';
 import { supabase } from './lib/supabaseClient';
 import { DashboardSkeleton } from './components/common/DashboardSkeleton';
 import { LoadingLogs } from './components/common/LoadingLogs';
@@ -73,36 +72,15 @@ export default function App() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isMobileWarningOpen, setIsMobileWarningOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isConfiguracoesOpen, setIsConfiguracoesOpen] = useState(false);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [equipamentosOpen, setEquipamentosOpen] = useState<boolean>(false);
   const [manutencaoOpen, setManutencaoOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   
   const userDropdownRef = useRef<HTMLDivElement>(null);
-  const companyDropdownRef = useRef<HTMLDivElement>(null);
-  
-  const fetchUserCompanies = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('company_members')
-      .select('company_id, companies (id, name)')
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error fetching companies:', error);
-      return;
-    }
-
-    const companyList = (data as any[]).map(item => item.companies as Company);
-    setCompanies(companyList);
-    if (companyList.length > 0) {
-      setSelectedCompany(companyList[0]);
-    }
-  };
   
   // Responsive sidebar state for mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -124,15 +102,12 @@ export default function App() {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setIsUserDropdownOpen(false);
       }
-      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target as Node)) {
-        setIsCompanyDropdownOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [userDropdownRef, companyDropdownRef]);
+  }, [userDropdownRef]);
 
   // Derive current view from location
   const currentView: ActiveView = location.pathname === '/equipamentos/componentes' 
@@ -145,7 +120,6 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
-        fetchUserCompanies(session.user.id);
         if (window.innerWidth < 768) {
             setIsMobileWarningOpen(true);
         }
@@ -165,7 +139,6 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsLoggedIn(true);
-        fetchUserCompanies(session.user.id);
         supabase.from('profiles').select('name, surname, role').eq('id', session.user.id).single().then(({ data, error }) => {
           if (error) console.error('Error fetching profile:', error);
           else if (data) setUser(data as UserProfile);
@@ -344,7 +317,7 @@ export default function App() {
                       {user?.name} {user?.surname}
                     </div>
                     <button 
-                      onClick={() => { handleViewChange('configuracoes'); setIsUserDropdownOpen(false); }}
+                      onClick={() => { setIsConfiguracoesOpen(true); setIsUserDropdownOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
                       <Settings size={14} />
@@ -376,26 +349,6 @@ export default function App() {
           {/* Sidebar Header & Brand Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900 relative">
             <img src="https://i.postimg.cc/QxqWHtpg/avexas-logo-white.png" alt="Avexas Logo" className="h-10 w-auto" />
-            <button
-                onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                className="text-white hover:text-sky-400"
-            >
-                <ChevronDown size={20} />
-            </button>
-            {isCompanyDropdownOpen && (
-                <div ref={companyDropdownRef} className="absolute top-full left-0 w-full bg-slate-700 text-white z-50 shadow-lg py-2">
-                    <div className="px-4 py-1 text-xs text-slate-300 uppercase tracking-wider">Visualizar como:</div>
-                    {companies.map(company => (
-                        <button
-                            key={company.id}
-                            onClick={() => { setSelectedCompany(company); setIsCompanyDropdownOpen(false); }}
-                            className={`block w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 ${selectedCompany?.id === company.id ? 'bg-slate-600' : ''}`}
-                        >
-                            {company.name}
-                        </button>
-                    ))}
-                </div>
-            )}
           </div>
 
           {/* Navigation Links */}
@@ -835,8 +788,8 @@ export default function App() {
           className="flex-1 flex flex-col md:pl-80 min-h-0 w-full transition-all duration-300"
         >
           <NotificationPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+          <ConfiguracoesPanel isOpen={isConfiguracoesOpen} onClose={() => setIsConfiguracoesOpen(false)} />
           <div className="flex-1 w-full p-2 md:p-4">
-            <CommitIndicator />
             <div className="flex items-center gap-1.5 text-[10px] font-inter text-slate-400 px-2 py-2 w-full justify-between">
                 <div className="flex items-center gap-1.5">
                     <button onClick={() => handleViewChange('dashboard')} className="hover:text-sky-600 cursor-pointer transition-colors flex items-center">
@@ -936,7 +889,6 @@ export default function App() {
                     <Route path="/estoque-pecas" element={<EstoquePecasView />} />
                     <Route path="/compras-faturacao" element={<ComprasFaturacaoView />} />
                     <Route path="/relatorios" element={<RelatoriosView />} />
-                    <Route path="/configuracoes" element={<ConfiguracoesView />} />
                     <Route path="/ficha-tecnica" element={<FichaTecnicaView />} />
                     <Route path="/" element={<DashboardView />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -991,12 +943,10 @@ export default function App() {
           
           {/* Logo / app name in the left */}
           <div className="flex items-center gap-1.5 opacity-80">
-            <span className="font-sans font-bold text-sky-900 tracking-wider">{selectedCompany?.name || 'Avexas'}</span>
           </div>
 
           {/* Copyright and developer on the right */}
           <div className="flex items-center gap-1 opacity-80">
-            <span className="text-[9px] text-slate-400 opacity-60">{formatDate(currentTime)}</span>
           </div>
 
         </div>

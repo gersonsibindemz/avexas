@@ -49,11 +49,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-sky-950 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-sky-950 flex flex-col items-center justify-center py-5 px-6">
+      <div className="w-full max-w-xs space-y-8">
 
 
-        <h1 className="font-sans text-sky-100 text-3xl font-normal mb-6 text-center">Login</h1>
+        <h1 className="font-sans text-sky-100 text-3xl font-normal mb-6 text-center">Acessar</h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <label className="block text-sm text-sky-200">E-mail</label>
