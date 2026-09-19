@@ -1,0 +1,458 @@
+RELATORIO COMPLETO DE CODIGOS GLOBAIS IMPLEMENTADOS
+====================================================
+
+Projeto: AVEXAS CMMS
+Diretorio analisado: /workspaces/avexas
+Data e hora de criacao deste relatorio: 2026-09-19 15:01:25 +0200 (GMT+2)
+Fuso horario solicitado: GMT+2
+Estado analisado: conteudo existente no diretorio no momento da geracao
+
+NOTA DE ESCOPO
+--------------
+Este relatorio cataloga todo o codigo implementado e os ficheiros do diretorio,
+com foco em comportamento, contratos, integracoes, rotas e simbolos publicos.
+Nao duplica literalmente as 4.880 linhas de codigo-fonte dentro do relatorio;
+identifica cada ficheiro, cada componente/export principal e as responsabilidades
+implementadas. O inventario inclui tambem configuracao, entrada da aplicacao,
+assets e artefactos de build presentes no diretorio.
+
+RESUMO EXECUTIVO
+----------------
+- Aplicacao: SPA React 19 + TypeScript + Vite.
+- Dominio: sistema de gestao de manutencao (CMMS).
+- Ficheiros no diretorio, excluindo .git e node_modules: 63.
+- Ficheiros de codigo/style em src: 45.
+- Linhas de codigo/style em src: 4.880.
+- Entrada: src/main.tsx.
+- Componente raiz e orquestrador: src/App.tsx (958 linhas).
+- Persistencia e autenticacao: Supabase.
+- UI: Tailwind CSS, Lucide React, Motion e Sonner.
+- Routing: BrowserRouter, Routes, Route, Navigate, useLocation e useNavigate.
+- Validacao TypeScript executada: npm run lint, concluida sem erros.
+- Build executado: npm run build, concluido com sucesso.
+- Aviso do build: bundle JS minificado superior a 500 kB; nao impede a compilacao.
+
+ARQUITETURA GLOBAL
+------------------
+1. src/main.tsx cria o root React em document#root, envolve a aplicacao em
+   StrictMode e BrowserRouter, e carrega o CSS global.
+2. src/App.tsx gere autenticacao, sessao, navegacao, layout, sidebar, menus,
+   modais globais, breadcrumbs, notificacoes, loading e renderizacao por rota.
+3. src/components/<dominio>/ contem as views e subcomponentes de cada modulo.
+4. src/lib/ contem cliente Supabase, tratamento de erros, traducao e exportacao.
+5. src/types.ts concentra os contratos de dados partilhados entre as views.
+6. src/index.css define Tailwind, fontes, regras globais de interacao e scrollbar.
+
+ROTAS IMPLEMENTADAS
+-------------------
+- /                         -> redirecionamento contextual para dashboard/login.
+- /login                    -> LoginView.
+- /cadastrarse              -> CadastrarseView.
+- /dashboard                -> DashboardView.
+- /equipamentos             -> TodosEquipamentosView.
+- /equipamentos/:id         -> DetalhesEquipamentoPage.
+- /equipamentos/componentes -> ComponentesView.
+- /plano-manutencao         -> PlanoManutencaoView.
+- /ordens-manutencao        -> OrdensManutencaoView.
+- /equipes-manutencao       -> EquipesManutencaoView.
+- /notificacoes             -> NotificacoesView.
+- /estoque-pecas            -> EstoquePecasView.
+- /compras-faturacao        -> ComprasFaturacaoView.
+- /relatorios               -> RelatoriosView.
+- /ficha-tecnica            -> FichaTecnicaView.
+- /*                        -> fallback Navigate para /dashboard.
+
+NUCLEO DA APLICACAO: src/App.tsx
+---------------------------------
+Exporta default function App.
+- ActiveView tipa dashboard, equipamentos, componentes, manutencao, notificacoes,
+  stock, compras, relatorios e configuracoes.
+- UserProfile tipa nome, apelido, role e avatar opcional.
+- Mantem estado de login, utilizador, dropdown, confirmacao de logout, aviso de
+  viewport mobile, notificacoes, configuracoes, componente selecionado, grupos
+  abertos, loading, inicializacao auth, logs, menu mobile e hora corrente.
+- Atualiza o relogio a cada segundo e formata data/hora em pt-BR.
+- Fecha dropdowns ao clicar fora.
+- Deriva a view atual a partir de location.pathname.
+- Consulta a sessao Supabase no arranque e reage a onAuthStateChange.
+- Consulta profiles para carregar name, surname e role do utilizador.
+- Redireciona a sessao ativa de / para /dashboard.
+- handleLogout executa supabase.auth.signOut e navega para /login.
+- getSectionTitle produz titulos das secoes.
+- getBreadcrumbItems produz breadcrumbs navegaveis.
+- handleViewChange traduz ActiveView em paths, atualiza componente selecionado e
+  fecha menus.
+- Renderiza rotas protegidas e publicas, sidebar desktop/mobile, menu do perfil,
+  modal de logout, alerta mobile, NotificationPanel, ConfiguracoesPanel,
+  Toaster, DashboardSkeleton e LoadingLogs.
+- Usa AnimatePresence e motion para transicoes de views, sidebar e modais.
+
+CONTRATOS GLOBAIS: src/types.ts
+--------------------------------
+- Componente: id, nome, codigo, localizacao, status, categoria, fabricante,
+  modelo, numeroSerie, anoFabricacao, dataAquisicao, prazoGarantia, imagens,
+  documentos, equipamento_id e auditoria created/updated.
+- Equipamento: dados de identificacao e localizacao, grupoSubgrupo, criticidade,
+  imagem, documentos, componentes associados e auditoria.
+- TipoManutencao: id e nome.
+- PrioridadeManutencao: id e nome.
+- StatusOrdem: id e nome.
+- OrdemManutencao: equipamento, tipo, prioridade, status, descricao, execucao,
+  tecnico, tempo, custo, observacoes, materiais, anexo e campos de display/join.
+- PlanoManutencao: ordem, descricao, inicio, fim, status tipado como planejado,
+  em_execucao, concluido ou cancelado e campos de display.
+- AdvancedFilters: ordenacao name/date asc/desc, localizacoes e status.
+- Profile: identidade, nome, role, especialidade e contacto.
+- Peca: codigo, descricao, unidade, preco, fornecedor, estoque e reorder_point.
+- OrdemPeca: ligacao ordem/peca, quantidade e campos de display.
+- Company: id, name e created_at.
+- CompanyMember: empresa, utilizador, company opcional e created_at.
+
+MODULO DE AUTENTICACAO
+----------------------
+[ src/components/login/LoginView.tsx | 115 linhas ]
+- Exporta LoginView e LoginViewProps.
+- Formulario de email/password com estado de envio e mostrar/ocultar password.
+- Recupera rememberedEmail do localStorage no carregamento.
+- Guarda ou remove rememberedEmail conforme checkbox de memoria.
+- Usa supabase.auth.signInWithPassword.
+- Traduz erros conhecidos, mostra toast.error e chama onLogin em sucesso.
+- Navega para /cadastrarse.
+
+[ src/components/login/CadastrarseView.tsx | 87 linhas ]
+- Exporta CadastrarseView.
+- Formulario de nome, email, password e confirmacao.
+- Valida igualdade de passwords no cliente.
+- Usa supabase.auth.signUp com metadados de nome/apelido.
+- Traduz erros, mostra sucesso e retorna para login.
+
+MODULO DE EQUIPAMENTOS
+----------------------
+[ TodosEquipamentosView.tsx | 379 linhas ]
+- Exporta TodosEquipamentosView.
+- Carrega equipamentos e componentes com Supabase e organiza os itens.
+- Pesquisa com sugestoes, selecao por teclado e navegacao para equipamento ou
+  componente.
+- Filtra por localizacao e status, ordena por nome/data ascendente/descendente.
+- Expande/recolhe linhas, mostra resumo, menu de acoes e loading.
+- Abre cadastro, detalhe, historico de manutencao e filtros avancados.
+- Atualiza/remover equipamento e componentes por acoes contextuais.
+
+[ CadastrarEquipamentoView.tsx | 289 linhas ]
+- Exporta CadastrarEquipamentoView e CadastrarEquipamentoProps.
+- Formulario completo de equipamento, com modo criar/editar.
+- Carrega opcoes de localizacoes, status, categorias, grupos e criticidades.
+- Obtencao do utilizador autenticado para created_by/updated_by.
+- Upload de imagem/documentos em Supabase Storage e obtencao de URLs publicas.
+- Insere ou atualiza equipamentos em Supabase.
+- Importa dados em lote atraves de ImportModal.
+- Usa handleAppError para falhas e chama onSave/onCancel.
+
+[ CadastrarComponenteView.tsx | 210 linhas ]
+- Exporta CadastrarComponenteView e props de criar/editar.
+- Formulario ligado a um equipamento pai.
+- Carrega status, suporta uploads para Storage e persiste em componentes.
+- Preenche created_by/updated_by, insere ou atualiza e comunica resultado.
+
+[ ComponentesView.tsx | 348 linhas ]
+- Exporta ComponentesView e define FlatComponente.
+- Carrega equipamentos com componentes e achata a apresentacao.
+- Pesquisa, sugestoes, filtros por localizacao/status e ordenacao.
+- Abre detalhe, cadastro, menu de acoes e modal de filtros.
+- Permite editar/remover e seleciona componente por id vindo da rota/estado.
+
+[ DetalhesEquipamentoPage.tsx | 39 linhas ]
+- Exporta pagina de detalhe baseada em useParams.
+- Consulta equipamento pelo id, mostra loading/erro e renderiza detalhe.
+- Navega para tras e fecha o detalhe.
+
+[ DetalhesEquipamentoView.tsx | 98 linhas ]
+- Exporta detalhe visual do equipamento.
+- Mostra os campos do equipamento, componentes e documentos.
+- handleDownload chama Edge Function gerar-ficha-tecnica com bearer token,
+  cria Blob, link temporario e descarrega a ficha tecnica.
+
+[ DetalhesComponenteView.tsx | 51 linhas ]
+- Exporta detalhe modal do componente, equipamento pai, campos e documentos.
+
+[ FilterModal.tsx | 121 linhas ]
+- Exporta FilterModal.
+- Edita AdvancedFilters, seleciona localizacoes/status e ordenacao.
+- Permite aplicar, limpar e fechar filtros.
+
+[ SummaryBar.tsx | 66 linhas ]
+- Exporta SummaryBar.
+- Consulta contagem total e contagens por status para uma tabela Supabase.
+- Mostra filtros/contadores e chama onFilterClick.
+
+[ ActionsMenu.tsx | 52 linhas ]
+- Exporta ActionsMenu.
+- Usa createPortal para menu contextual fora do fluxo normal.
+- Calcula posicionamento junto ao anchor, fecha fora e emite a acao escolhida.
+
+[ ImportModal.tsx | 70 linhas ]
+- Exporta ImportModal.
+- Le ficheiros de importacao Excel com XLSX.
+- Permite descarregar modelo_importacao.xlsx e envia matriz de dados ao callback.
+- Controla estado de leitura, erro e progresso.
+
+[ HistoricoManutencaoModal.tsx | 99 linhas ]
+- Exporta HistoricoManutencaoModal.
+- Consulta ordens_manutencao, tipos_manutencao, status_ordem e profiles em
+  paralelo e apresenta o historico do equipamento.
+- Trata loading, vazio, erro e fechamento.
+
+MODULO DE MANUTENCAO
+--------------------
+[ OrdensManutencaoView.tsx | 211 linhas ]
+- Exporta OrdensManutencaoView.
+- Consulta ordens, equipamentos, tipos, status, profiles e faz os joins para
+  campos de apresentacao.
+- Pesquisa com sugestoes, filtros locais e menu contextual.
+- Abre CadastrarOrdemView e EditarOrdemView.
+- Atualiza a lista local apos criar/editar e permite excluir ordem.
+
+[ CadastrarOrdemView.tsx | 202 linhas ]
+- Exporta CadastrarOrdemView e props.
+- Carrega equipamentos, tecnicos, tipos, prioridades, status e pecas.
+- Filtra tecnicos pelo role Tecnico de Manutencao.
+- Cria ordem em ordens_manutencao e liga pecas em ordem_pecas.
+- Gere pecas selecionadas, quantidades, anexo, custo, tempo e observacoes.
+- Apresenta loading e erro, chama onSave/onCancel.
+
+[ EditarOrdemView.tsx | 115 linhas ]
+- Exporta EditarOrdemView e props.
+- Edita campos da ordem, faz upload de relatorio para Storage, monta payload e
+  atualiza ordens_manutencao.
+- Devolve a ordem atualizada ao chamador.
+
+[ PlanoManutencaoView.tsx | 163 linhas ]
+- Exporta PlanoManutencaoView.
+- Consulta planos com dados de ordens e opcoes de status.
+- Pesquisa, sugestoes, filtros e visualizacao de lista/tabela.
+- Permite mudar status e cria plano via CadastrarPlanoView.
+- Alterna para calendario usando CalendarioPlanoView.
+
+[ CadastrarPlanoView.tsx | 122 linhas ]
+- Exporta CadastrarPlanoView e props.
+- Carrega ordens disponiveis, recolhe descricao, inicio, fim e status.
+- Insere em planos_manutencao, apresenta erros e informa sucesso.
+
+[ CalendarioPlanoView.tsx | 88 linhas ]
+- Exporta CalendarioPlanoView.
+- Usa react-calendar para apresentar planos por data de inicio.
+- tileContent marca dias com planos; selecao mostra detalhes do plano.
+
+[ EquipesManutencaoView.tsx | 193 linhas ]
+- Exporta EquipesManutencaoView.
+- Consulta tecnicos em profiles.
+- Pesquisa, sugestoes, filtro por especialidade e registo de novo tecnico.
+- Apresenta nome, contacto, especialidade e informacao da equipa.
+
+MODULO DE STOCK
+---------------
+[ src/components/estoque/EstoquePecasView.tsx | 166 linhas ]
+- Exporta EstoquePecasView.
+- Consulta pecas, permite adicionar peca e persiste em Supabase.
+- Pesquisa por descricao com sugestoes.
+- Filtra por texto e apresenta codigo, preco, fornecedor, estoque e reorder point.
+- Usa motion/AnimatePresence para entrada e saida visual dos elementos.
+
+MODULO DE RELATORIOS
+--------------------
+[ FichaTecnicaView.tsx | 69 linhas ]
+- Exporta FichaTecnicaView e props.
+- Organiza campos do equipamento em duas colunas.
+- Apresenta identificacao, localizacao, estado, fabricante, modelo, serie,
+  aquisicao, garantia, categoria, grupo e criticidade.
+
+[ RelatoriosView.tsx | 8 linhas ]
+- Exporta RelatoriosView.
+- View estrutural de relatorios disponivel no menu; atualmente e um placeholder
+  visual sem fluxo de consulta/exportacao adicional proprio.
+
+MODULO DE NOTIFICACOES
+----------------------
+[ NotificacoesView.tsx | 8 linhas ]
+- Exporta NotificacoesView, view estrutural atualmente placeholder.
+
+[ NotificationPanel.tsx | 38 linhas ]
+- Exporta NotificationPanel e props isOpen/onClose.
+- Painel lateral/modal de notificacoes integrado no layout global.
+
+MODULO DE CONFIGURACOES
+-----------------------
+[ ConfiguracoesView.tsx | 8 linhas ]
+- Exporta ConfiguracoesView, view estrutural placeholder.
+
+[ ConfiguracoesPanel.tsx | 31 linhas ]
+- Exporta ConfiguracoesPanel e props.
+- Painel animado com Motion, abertura/fecho e botao de fechar.
+
+MODULO DE COMPRAS
+-----------------
+[ ComprasFaturacaoView.tsx | 8 linhas ]
+- Exporta ComprasFaturacaoView.
+- View estrutural de Compras & Faturacao atualmente placeholder visual.
+
+COMPONENTES COMUNS
+------------------
+[ Modal.tsx | 30 linhas ]
+- Exporta Modal e ModalProps; modal reutilizavel com titulo, children, classe,
+  estado de abertura e callback de fecho.
+
+[ FormCard.tsx | 24 linhas ]
+- Exporta FormCard e FormCardProps; container reutilizavel de formularios com
+  titulo, children e fecho.
+
+[ DashboardSkeleton.tsx | 15 linhas ]
+- Exporta DashboardSkeleton; placeholder visual de carregamento do dashboard.
+
+[ LoadingLogs.tsx | 15 linhas ]
+- Exporta LoadingLogs e props logs; lista mensagens de progresso.
+
+[ OnlineUsers.tsx | 103 linhas ]
+- Exporta OnlineUsers e UserPresence.
+- Abre canal realtime Supabase onlineuser.
+- Le presenceState, consulta profiles e combina utilizadores online/offline.
+- Mostra contador de presencas e lista de utilizadores.
+- Limpa subscricao/canal no unmount e fecha painel ao clicar fora.
+
+[ CommitIndicator.tsx | 30 linhas ]
+- Exporta CommitIndicator.
+- Consulta a GitHub API publica para o ultimo commit do repositorio
+  gersonsibindemz/avexas e apresenta estado/indicador.
+
+BIBLIOTECAS GLOBAIS
+-------------------
+[ src/lib/supabaseClient.ts | 10 linhas ]
+- Le VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY de import.meta.env.
+- Falha cedo se as credenciais estiverem ausentes.
+- Exporta cliente singleton supabase criado por createClient.
+
+[ src/lib/errorHandler.ts | 17 linhas ]
+- Exporta handleAppError(error, context, userMessage).
+- Regista contexto, timestamp ISO, erro e mensagem no console.
+- Mostra mensagem amigavel via toast.error.
+
+[ src/lib/translator.ts | 11 linhas ]
+- Exporta translateMessage.
+- Traduz cinco mensagens de autenticacao Supabase para portugues e devolve a
+  mensagem original quando nao existe traducao.
+
+[ src/lib/excelExport.ts | 12 linhas ]
+- Exporta downloadExcel(data, fileName, headersMap).
+- Converte mapa de cabecalhos e dados para worksheet, cria workbook e descarrega
+  um ficheiro XLSX com a folha Ficha Tecnica.
+
+ESTILOS E ENTRADA
+-----------------
+[ src/index.css | 35 linhas ]
+- Importa fontes Lato e Inter do Google Fonts.
+- Importa Tailwind CSS e define tokens de fonte.
+- Desativa selecao/arrasto global fora de inputs, textareas e buttons.
+- Desativa arrasto de imagem na sidebar.
+- Define scrollbar compacta da sidebar, incluindo cores de track/thumb/hover.
+
+[ src/main.tsx | 13 linhas ]
+- Ponto de entrada React, StrictMode, BrowserRouter, App e CSS global.
+
+[ src/vite-env.d.ts | 1 linha ]
+- Declaracoes ambientais Vite.
+
+TABELAS E SERVICOS SUPABASE IDENTIFICADOS
+-----------------------------------------
+Tabelas consultadas ou alteradas no codigo:
+- assets
+- categorias
+- componentes
+- criticidades
+- equipamentos
+- grupos_subgrupos
+- localizacoes
+- ordem_pecas
+- ordens
+- ordens_manutencao
+- pecas
+- planos_manutencao
+- prioridades_manutencao
+- profiles
+- status_options
+- status_ordem
+- tipos_manutencao
+- canal realtime onlineuser
+
+Operacoes Supabase implementadas:
+- auth.getSession, auth.getUser, auth.signInWithPassword, auth.signUp,
+  auth.signOut e auth.onAuthStateChange.
+- from().select() com filtros eq, joins e consultas paralelas.
+- insert, update e delete em entidades de dominio.
+- storage.from(...).upload e getPublicUrl para imagens/documentos/relatorios.
+- channel(), presenceState(), subscribe e removeChannel para presenca online.
+- Edge Function HTTP gerar-ficha-tecnica para exportacao da ficha.
+
+DEPENDENCIAS E CODIGO GLOBAL DE TERCEIROS
+-----------------------------------------
+- react/react-dom: componentes, estado, efeitos e renderizacao.
+- react-router-dom: BrowserRouter e roteamento.
+- @supabase/supabase-js: auth, base de dados, storage e realtime.
+- lucide-react: icones da interface.
+- motion: animacoes e transicoes.
+- sonner: toasts de sucesso/erro.
+- xlsx: leitura de importacoes e exportacao Excel.
+- react-calendar: calendario de planos de manutencao.
+- vite, @vitejs/plugin-react, Tailwind e @tailwindcss/vite: build/dev/style.
+- html2pdf.js, @google/genai, googleapis, express e dotenv estao declarados em
+  package.json, mas nao ha uso direto identificavel no codigo atual de src.
+
+FICHEIROS DE CONFIGURACAO E OPERACAO
+------------------------------------
+- package.json: scripts dev na porta 3000, build, preview, clean e lint; lista de
+  dependencias de runtime e desenvolvimento.
+- package-lock.json: lockfile; ja possuia alteracoes no workspace antes deste
+  relatorio e foi preservado sem modificacao.
+- bun.lock: lockfile alternativo presente.
+- tsconfig.json: ES2022, module ESNext/bundler, JSX react-jsx, strictidade nao
+  ativada explicitamente, noEmit e alias @/* para a raiz.
+- vite.config.ts: plugins React/Tailwind, alias @, HMR condicional por
+  DISABLE_HMR e watch condicional.
+- index.html: shell HTML, titulo AVEXAS | Demo version, favicon remoto e root.
+- vercel.json: rewrite de qualquer caminho para /index.html para SPA.
+- .env.example: placeholders GEMINI_API_KEY, APP_URL, VITE_SUPABASE_URL e
+  VITE_SUPABASE_ANON_KEY.
+- metadata.json: nome AVEXAS CMMS, descricao CMMS e capability Gemini server-side.
+- firebase-applet-config.json: identificadores Firebase presentes no diretorio;
+  os valores sensiveis nao sao repetidos neste relatorio.
+- AGENTS.md: exige subdiretorios por feature em src/components e integracao via
+  src/App.tsx.
+- README.md: documentacao inicial com branding do projeto.
+- .gitattributes e .gitignore: regras de Git.
+
+ASSETS E ARTEFACTOS PRESENTES
+-----------------------------
+- assets/images/avexas_logo_white.png: logo local.
+- dist/index.html: build produzido.
+- dist/assets/index-DogBBiE4.css: CSS compilado do build.
+- dist/assets/index-aYS1mY_d.js: JavaScript compilado do build.
+
+VALIDACAO REALIZADA
+-------------------
+- npm run lint: sucesso; tsc --noEmit terminou sem erros.
+- npm run build: sucesso; 2.193 modulos transformados; build produzido em dist.
+- Aviso nao bloqueante: o chunk JS principal ficou com aproximadamente 1.055 kB
+  antes de gzip e 312 kB gzipado.
+- Estado Git observado antes da criacao: package-lock.json modificado; nenhuma
+  outra alteracao foi revertida ou incorporada.
+
+OBSERVACOES FUNCIONAIS FINAIS
+-----------------------------
+- O fluxo de autenticacao e as views de equipamentos/manutencao/stock possuem
+  integracao Supabase efetiva no codigo.
+- Dashboard, Compras & Faturacao, Relatorios, Notificacoes e Configuracoes contem
+  componentes/rotas funcionais de apresentacao, mas algumas views principais sao
+  atualmente placeholders com pouca ou nenhuma consulta propria.
+- Nao foram identificados testes automatizados no diretorio analisado.
+- O relatorio representa o estado observado no timestamp indicado no inicio;
+  qualquer alteracao posterior exige nova geracao do inventario.
+
+FIM DO RELATORIO
